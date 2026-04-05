@@ -55,12 +55,18 @@ chmod +x install.sh
 
 ### Windows
 
+**Option 1: PowerShell (Recommended)**
+
 ```powershell
-# PowerShell
-irm https://raw.githubusercontent.com/acacMAX/accil/main/install.ps1 | iex
+# Download and run
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/acacMAX/accil/main/install.ps1" -OutFile "$env:TEMP\accil-install.ps1"
+& "$env:TEMP\accil-install.ps1"
 ```
 
-Or download and double-click `install.bat`
+**Option 2: Batch File**
+
+Download [`install.bat`](https://raw.githubusercontent.com/acacMAX/accil/main/install.bat) and double-click to run
 
 ### Manual Installation
 
