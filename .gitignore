@@ -32,8 +32,8 @@ go.work
 Thumbs.db
 
 # Config (sessions and local context are ignored)
-.accil/sessions/
-.accil-context.json
+.accil/
+!.accil/config.example.yaml
 # But NOT the config.yaml template (we keep a sample)
 
 # Temporary files
