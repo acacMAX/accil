@@ -132,11 +132,8 @@ Write-Info "Checking PATH..."
 $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
 if ($currentPath -notlike "*$InstallDir*") {
     Write-Info "Adding $InstallDir to PATH..."
-    [Environment]::SetEnvironmentVariable(
-        "Path",
-        "$currentPath;$InstallDir",
-        "User"
-    )
+    $newPath = "$currentPath;$InstallDir"
+    [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
     Write-Success "Added to PATH"
 
     # Refresh current session PATH
