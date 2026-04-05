@@ -68,8 +68,34 @@ echo.
 
 :: Add to PATH
 echo [INFO] Adding to PATH...
-setx PATH "%PATH%;%INSTALL_DIR%" >nul 2>&1
-echo [OK] Added to PATH
+set "USER_PATH=%INSTALL_DIR%"
+
+:: Check if already in PATH
+echo %PATH% | findstr /C:"%INSTALL_DIR%" >nul
+if %ERRORLEVEL% equ 0 (
+    echo [OK] Already in PATH
+) else (
+    :: Add using setx
+    for /f "2 tokens=3," %%a in ('reg query "HKCU\Environment" /v PATH') do set CURRENT_USER_PATH=%%b
+    setx PATH "!CURRENT_USER_PATH!;%INSTALL_DIR%" >nul 2>&1
+    if !ERRORLEVEL! equ 0 (
+        echo [OK] Added to user PATH
+    ) else (
+        echo [WARNING] Failed to add to PATH automatically
+        echo Please add manually: %INSTALL_DIR%
+    )
+)
+echo.
+
+:: Verify installation
+echo [INFO] Verifying...
+if exist "%INSTALL_DIR%\accil.exe" (
+    echo [OK] accil.exe found at: %INSTALL_DIR%
+) else (
+    echo [ERROR] accil.exe not found!
+    pause
+    exit /b 1
+)
 echo.
 
 :: Success
@@ -79,12 +105,15 @@ echo ========================================
 echo.
 echo Install location: %INSTALL_DIR%\accil.exe
 echo.
-echo Usage:
-echo   accil              Start interactive mode
-echo   accil "hello"      Single execution
-echo   accil --help       Show help
+echo IMPORTANT: Please follow these steps:
+echo   1. Close ALL command prompt windows
+echo   2. Open a NEW command prompt
+echo   3. Type: accil --help
 echo.
-echo NOTE: Please restart your command prompt to use 'accil' command
+echo If 'accil' is still not recognized, run this command:
+echo   setx PATH "%%PATH%%;%INSTALL_DIR%"
+echo.
+echo Then restart your command prompt again.
 echo.
 
 set /p run_now="Run ACCIL now? (y/n): "
