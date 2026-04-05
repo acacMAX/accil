@@ -1,0 +1,24 @@
+# Code Owners
+# These owners will be the default reviewers for pull requests
+# For more information, see:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Overall ownership
+* @accil/maintainers
+
+# Core components
+/cmd/ @accil/maintainers
+/internal/ai/ @accil/maintainers
+/internal/config/ @accil/maintainers
+/internal/tui/ @accil/maintainers
+
+# Feature modules
+/internal/quest/ @accil/maintainers
+/internal/agent/ @accil/maintainers
+/internal/review/ @accil/maintainers
+/internal/context/ @accil/maintainers
+
+# Infrastructure
+/.github/workflows/ @accil/maintainers
+/install.sh @accil/maintainers
+/install.bat @accil/maintainers

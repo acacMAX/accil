@@ -1,0 +1,66 @@
+# Binaries
+accil
+accil.exe
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of go coverage
+*.out
+coverage.txt
+coverage.html
+
+# Go workspace
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Config (sessions and local context are ignored)
+.accil/sessions/
+.accil-context.json
+# But NOT the config.yaml template (we keep a sample)
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# Build output
+dist/
+build/
+
+# Environment files (if not using config.yaml)
+.env
+.env.local
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory

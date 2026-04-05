@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+        cache: true
+
+    - name: Run tests
+      run: go test -v ./...
+
+    - name: Build binaries
+      run: |
+        mkdir -p dist
+        # Windows
+        GOOS=windows GOARCH=amd64 go build -o dist/accil-windows-amd64.exe .
+        # macOS
+        GOOS=darwin GOARCH=amd64 go build -o dist/accil-darwin-amd64 .
+        GOOS=darwin GOARCH=arm64 go build -o dist/accil-darwin-arm64 .
+        # Linux
+        GOOS=linux GOARCH=amd64 go build -o dist/accil-linux-amd64 .
+        GOOS=linux GOARCH=arm64 go build -o dist/accil-linux-arm64 .
+
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/accil-windows-amd64.exe
+          dist/accil-darwin-amd64
+          dist/accil-darwin-arm64
+          dist/accil-linux-amd64
+          dist/accil-linux-arm64
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

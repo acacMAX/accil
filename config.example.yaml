@@ -1,0 +1,26 @@
+# ACCIL Configuration Example
+# Copy this file to ~/.accil/config.yaml
+
+# API Key (or use AI_API_KEY environment variable)
+api_key: ""
+
+# API Base URL (default: OpenAI)
+# Use this for custom endpoints like Azure, Ollama, etc.
+base_url: "https://api.openai.com/v1"
+
+# Default model
+model: "gpt-4o"
+
+# Maximum tokens in response
+max_tokens: 4096
+
+# Auto-approve all operations (dangerous!)
+auto_approve: false
+
+# Blocked commands (always blocked regardless of auto_approve)
+block_list:
+  - "rm -rf /"
+  - "rm -rf /*"
+  - "mkfs"
+  - "dd if="
+  - ":(){ :|:& };:"
