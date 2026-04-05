@@ -15,7 +15,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20|%20macOS%20|%20Linux-lightgrey)](https://github.com/accil/accil)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20|%20macOS%20|%20Linux-lightgrey)](https://github.com/acacMAX/accil)
 
 [English](README.md) | [中文](README_zh.md)
 
@@ -41,13 +41,13 @@
 ### Linux / macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/accil/accil/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/acacMAX/accil/main/install.sh | bash
 ```
 
 或
 
 ```bash
-git clone https://github.com/accil/accil.git
+git clone https://github.com/acacMAX/accil.git
 cd accil
 chmod +x install.sh
 ./install.sh
@@ -57,7 +57,7 @@ chmod +x install.sh
 
 ```powershell
 # PowerShell
-irm https://raw.githubusercontent.com/accil/accil/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/acacMAX/accil/main/install.ps1 | iex
 ```
 
 或下载后双击运行 `install.bat`
@@ -66,7 +66,7 @@ irm https://raw.githubusercontent.com/accil/accil/main/install.ps1 | iex
 
 ```bash
 # 克隆仓库
-git clone https://github.com/accil/accil.git
+git clone https://github.com/acacMAX/accil.git
 cd accil
 
 # 安装依赖

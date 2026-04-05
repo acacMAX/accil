@@ -5,7 +5,7 @@
 
 set -e
 
-REPO_URL="https://github.com/accil/accil.git"
+REPO_URL="https://github.com/acacMAX/accil.git"
 INSTALL_DIR="$HOME/.accil/bin"
 BINARY_NAME="accil"
 

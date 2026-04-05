@@ -4,7 +4,7 @@ setlocal enabledelayexpansion
 
 :: ACCIL 一键安装脚本 (Windows)
 
-set REPO_URL=https://github.com/accil/accil.git
+set REPO_URL=https://github.com/acacMAX/accil.git
 set INSTALL_DIR=%USERPROFILE%\.accil\bin
 set BINARY_NAME=accil.exe
 
