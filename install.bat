@@ -22,7 +22,7 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-for /f "tokens=3" %%v in ('go version 2^>^&1') do set GO_VERSION=%%v
+for /f "tokens=3" %%v in ('go version') do set GO_VERSION=%%v
 echo [OK] Go version: %GO_VERSION%
 
 :: Check if git is installed
@@ -30,25 +30,31 @@ where git >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] Git is not installed!
     echo Please download and install Git from: https://git-scm.com/download/win
+    echo After installing Git, run this script again.
     pause
     exit /b 1
 )
 
-for /f "tokens=3" %%v in ('git --version 2^>^&1') do set GIT_VERSION=%%v
-echo [OK] Git version: %GIT_VERSION%
+echo [OK] Git is installed
 echo.
 
 :: Clone repository to temp directory
 set TEMP_DIR=%TEMP%\accil-install-%RANDOM%
 echo [INFO] Downloading ACCIL from GitHub...
+echo [INFO] Repository: %REPO_URL%
+echo.
 
 git clone --depth 1 %REPO_URL% "%TEMP_DIR%"
 if %ERRORLEVEL% neq 0 (
+    echo.
     echo [ERROR] Failed to download from GitHub
-    echo Please check:
-    echo   1. Your internet connection
-    echo   2. If you need a proxy, set it first:
+    echo.
+    echo Possible solutions:
+    echo   1. Check your internet connection
+    echo   2. If using proxy, configure git:
     echo      git config --global http.proxy http://127.0.0.1:7890
+    echo   3. Or download manually from:
+    echo      https://github.com/acacMAX/accil/archive/refs/heads/main.zip
     pause
     exit /b 1
 )
@@ -57,9 +63,15 @@ echo.
 
 :: Build
 echo [INFO] Building ACCIL...
-pushd "%TEMP_DIR%"
+if not exist "%TEMP_DIR%" (
+    echo [ERROR] Download directory not found
+    pause
+    exit /b 1
+)
+
+cd /d "%TEMP_DIR%"
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Failed to enter build directory
+    echo [ERROR] Cannot access download directory
     pause
     exit /b 1
 )
@@ -68,9 +80,10 @@ echo [INFO] Installing dependencies...
 go mod tidy
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] Failed to install dependencies
-    echo This might be a network issue. Try setting Go proxy:
+    echo.
+    echo Try setting Go proxy:
     echo   go env -w GOPROXY=https://goproxy.cn,direct
-    popd
+    cd /d "%USERPROFILE%"
     pause
     exit /b 1
 )
@@ -81,21 +94,22 @@ echo [INFO] Compiling...
 go build -o "%INSTALL_DIR%\accil.exe" .
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] Build failed
-    popd
+    cd /d "%USERPROFILE%"
     pause
     exit /b 1
 )
 echo [OK] Build completed
-popd
+
+cd /d "%USERPROFILE%"
 
 :: Cleanup
 echo [INFO] Cleaning up...
-rmdir /s /q "%TEMP_DIR%" 2>nul
+if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
 echo [OK] Cleanup completed
 echo.
 
 :: Add to PATH
-echo [INFO] Adding to PATH...
+echo [INFO] Configuring PATH...
 
 :: Check if already in PATH
 echo %PATH% | findstr /C:"%INSTALL_DIR%" >nul
@@ -105,9 +119,9 @@ if %ERRORLEVEL% equ 0 (
     :: Get current user PATH
     for /f "skip=2 tokens=2,*" %%a in ('reg query "HKCU\Environment" /v PATH 2^>nul') do set CURRENT_USER_PATH=%%b
     if "!CURRENT_USER_PATH!"=="" (
-        setx PATH "%INSTALL_DIR%" >nul 2>&1
+        setx PATH "%INSTALL_DIR%" >nul
     ) else (
-        setx PATH "!CURRENT_USER_PATH!;%INSTALL_DIR%" >nul 2>&1
+        setx PATH "!CURRENT_USER_PATH!;%INSTALL_DIR%" >nul
     )
     if !ERRORLEVEL! equ 0 (
         echo [OK] Added to user PATH
