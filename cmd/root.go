@@ -485,7 +485,7 @@ func loadConfig() *config.Config {
 
 // newExecutor 创建配置好的工具执行器
 func newExecutor(cfg *config.Config) *tools.Executor {
-	executor := newExecutor(cfg)
+	executor := tools.NewExecutor(cfg.WorkDir, cfg.BlockList)
 	if cfg.CommandTimeout > 0 {
 		executor.SetCommandTimeout(time.Duration(cfg.CommandTimeout) * time.Second)
 	}
