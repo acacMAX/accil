@@ -12,7 +12,7 @@ We take the security of ACCIL seriously. If you believe you have found a securit
 
 **Please do NOT report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to [security@accil.dev](mailto:security@accil.dev) (placeholder - update with actual email).
+Instead, please report them via email to [acac74151@gmail.com](mailto:acac74151@gmail.com).
 
 You should receive a response within 48 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
 
@@ -59,7 +59,7 @@ If you have suggestions on how this process could be improved, please submit a p
 
 **请不要通过公共 GitHub Issue 报告安全漏洞。**
 
-请通过电子邮件发送至 [security@accil.dev](mailto:security@accil.dev)（占位符 - 请更新为实际邮箱）。
+请通过电子邮件发送至 [acac74151@gmail.com](mailto:acac74151@gmail.com)。
 
 您应该在48小时内收到回复。如果由于某种原因您没有收到，请通过电子邮件跟进以确保我们收到了您的原始消息。
 
