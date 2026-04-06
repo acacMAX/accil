@@ -139,6 +139,9 @@ Type these in interactive mode:
 | `↑/↓` | Browse history / Scroll messages |
 | `PgUp/PgDn` | Page up/down |
 | `Mouse Wheel` | Scroll messages |
+| `Shift+Mouse Drag` | Select and copy text |
+
+> **Tip**: Since mouse scrolling is enabled, direct mouse dragging is captured by the terminal. Hold `Shift` while dragging to select text for copying.
 
 ## 🔧 Configuration
 
