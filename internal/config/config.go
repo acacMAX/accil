@@ -104,7 +104,12 @@ func Save(cfg *Config) error {
 		return err
 	}
 
-	configPath := filepath.Join(home, ".accil", "config.yaml")
+	configDir := filepath.Join(home, ".accil")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return err
+	}
+
+	configPath := filepath.Join(configDir, "config.yaml")
 	return viper.WriteConfigAs(configPath)
 }
 
