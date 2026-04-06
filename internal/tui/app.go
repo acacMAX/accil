@@ -584,6 +584,31 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 			})
 			m.updateViewport()
 		}
+	case "/config", "/配置":
+		m.Messages = append(m.Messages, DisplayMessage{
+			Role:    "system",
+			Content: "请在终端运行 'accil config' 命令来编辑配置。",
+		})
+		m.updateViewport()
+	case "/memory":
+		if len(cmd) > 1 && cmd[1] == "init" {
+			m.Messages = append(m.Messages, DisplayMessage{
+				Role:    "system",
+				Content: "请在终端运行 'accil memory init' 命令来初始化项目记忆。",
+			})
+		} else {
+			m.Messages = append(m.Messages, DisplayMessage{
+				Role:    "system",
+				Content: "用法: /memory init - 初始化项目记忆 (AGENTS.md)",
+			})
+		}
+		m.updateViewport()
+	case "/context", "/上下文":
+		m.Messages = append(m.Messages, DisplayMessage{
+			Role:    "system",
+			Content: fmt.Sprintf("当前上下文:\n  工作目录: %s\n  模型: %s\n  模式: %s", ".", m.ModelName, m.Mode),
+		})
+		m.updateViewport()
 	default:
 		m.Messages = append(m.Messages, DisplayMessage{
 			Role:    "system",
