@@ -85,6 +85,18 @@ go build -o accil .
 ./accil
 ```
 
+**Windows 用户注意：**
+```powershell
+# 编译（需要加 .exe 后缀）
+go build -o accil.exe .
+
+# 运行
+.\accil.exe
+
+# 或直接运行（推荐新手）
+go run .
+```
+
 ## 📖 使用方法
 
 ### 交互模式

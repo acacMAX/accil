@@ -85,6 +85,18 @@ go build -o accil .
 ./accil
 ```
 
+**For Windows users:**
+```powershell
+# Build (requires .exe suffix)
+go build -o accil.exe .
+
+# Run
+.\accil.exe
+
+# Or run directly (recommended for beginners)
+go run .
+```
+
 ## 📖 Usage
 
 ### Interactive Mode
