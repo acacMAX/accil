@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -119,16 +120,29 @@ func IsConfigured() bool {
 	if err != nil {
 		return false
 	}
-	configPath := home + "/.accil/config.yaml"
+	configPath := filepath.Join(home, ".accil", "config.yaml")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		return false
 	}
 
-	cfg, err := Load()
+	// Read config file directly instead of relying on viper
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return false
 	}
-	return cfg.APIKey != ""
+
+	// Simple check: look for api_key in the file content
+	content := string(data)
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "api_key:") {
+			keyPart := strings.TrimPrefix(line, "api_key:")
+			keyPart = strings.TrimSpace(keyPart)
+			keyPart = strings.Trim(keyPart, "\"'")
+			return keyPart != ""
+		}
+	}
+	return false
 }
 
 // EditConfig opens the configuration editor
