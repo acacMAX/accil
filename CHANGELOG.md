@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-04-06
+
+### Added
+- **Multi-line Input Support** - Paste multi-line code and text directly with format preserved
+- `build.bat` script for Windows - build and install globally with one command
+- Textarea component replaces textinput for better multi-line editing
+
+### Changed
+- **Keyboard shortcuts updated**:
+  - `Enter` now inserts newline (for multi-line input)
+  - `Ctrl+S` or `F5` sends the message
+- Improved input field with 2-line default height
+- Updated documentation with new keyboard shortcuts
+
 ## [0.2.0] - 2026-04-06
 
 ### Added

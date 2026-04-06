@@ -4,12 +4,13 @@
 BINARY_NAME=accil
 VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 BUILD_DIR=dist
+INSTALL_DIR=$(USERPROFILE)/.accil/bin
 
 # Colors for output
-GREEN  := $(shell tput -Txterm setaf 2)
-YELLOW := $(shell tput -Txterm setaf 3)
-RED    := $(shell tput -Txterm setaf 1)
-NC     := $(shell tput -Txterm sgr0)
+GREEN  := $(shell tput -Txterm setaf 2 2>/dev/null || echo "")
+YELLOW := $(shell tput -Txterm setaf 3 2>/dev/null || echo "")
+RED    := $(shell tput -Txterm setaf 1 2>/dev/null || echo "")
+NC     := $(shell tput -Txterm sgr0 2>/dev/null || echo "")
 
 help: ## Show this help message
 	@echo 'Usage:'
@@ -20,8 +21,12 @@ help: ## Show this help message
 
 build: ## Build the binary for current OS
 	@echo "${GREEN}Building ${BINARY_NAME}...${NC}"
-	go build -ldflags="-X main.Version=$(VERSION)" -o $(BINARY_NAME) .
-	@echo "${GREEN}Build complete: ${BINARY_NAME}${NC}"
+	go build -ldflags="-X main.Version=$(VERSION)" -o $(BINARY_NAME).exe .
+	@echo "${GREEN}Build complete: ${BINARY_NAME}.exe${NC}"
+	@echo "${GREEN}Installing to global...${NC}"
+	@mkdir -p $(INSTALL_DIR)
+	@cp $(BINARY_NAME).exe $(INSTALL_DIR)/
+	@echo "${GREEN}Installed to: $(INSTALL_DIR)/$(BINARY_NAME).exe${NC}"
 
 test: ## Run tests
 	@echo "${GREEN}Running tests...${NC}"

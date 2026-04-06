@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -96,7 +96,7 @@ type DisplayMessage struct {
 type Model struct {
 	Messages      []DisplayMessage
 	viewport      viewport.Model
-	Input         textinput.Model
+	Input         textarea.Model
 	ready         bool
 	width         int
 	height        int
@@ -119,17 +119,17 @@ type Model struct {
 
 // NewModel 创建新的TUI模型
 func NewModel() Model {
-	ti := textinput.New()
-	ti.Placeholder = "输入消息或 /help..."
-	ti.Prompt = "│ "
-	ti.Focus()
-	ti.Width = 40
+	ta := textarea.New()
+	ta.Placeholder = "输入消息... (Ctrl+S 发送，支持多行粘贴)"
+	ta.SetWidth(40)
+	ta.SetHeight(2)
+	ta.Focus()
 
 	vp := viewport.New(40, 10)
 
 	return Model{
 		Messages:     []DisplayMessage{},
-		Input:        ti,
+		Input:        ta,
 		viewport:     vp,
 		ready:        false,
 		history:      []string{},
@@ -141,7 +141,7 @@ func NewModel() Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(textinput.Blink, tea.EnableMouseCellMotion)
+	return tea.Batch(m.Input.Focus(), tea.EnableMouseCellMotion)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -156,59 +156,36 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Messages = []DisplayMessage{}
 			m.updateViewport()
 			return m, nil
-		case tea.KeyUp:
-			if !m.Input.Focused() {
-				m.viewport.LineUp(1)
-				return m, nil
-			}
-			if len(m.history) > 0 && m.historyIndex < len(m.history)-1 {
-				m.historyIndex++
-				m.Input.SetValue(m.history[len(m.history)-1-m.historyIndex])
-			}
-			return m, nil
-		case tea.KeyDown:
-			if !m.Input.Focused() {
-				m.viewport.LineDown(1)
-				return m, nil
-			}
-			if m.historyIndex > 0 {
-				m.historyIndex--
-				m.Input.SetValue(m.history[len(m.history)-1-m.historyIndex])
-			} else if m.historyIndex == 0 {
+		case tea.KeyCtrlS, tea.KeyF5:
+			// Ctrl+S 或 F5 发送消息
+			if !m.AwaitingConfirm {
+				content := strings.TrimSpace(m.Input.Value())
+				if content == "" {
+					return m, nil
+				}
+
+				if strings.HasPrefix(content, "/") {
+					return m.handleSlashCommand(content)
+				}
+
+				m.history = append(m.history, content)
 				m.historyIndex = -1
+
+				m.Messages = append(m.Messages, DisplayMessage{
+					Role:    "user",
+					Content: content,
+				})
+				m.updateViewport()
+
 				m.Input.SetValue("")
+				return m, m.sendMessage(content)
 			}
-			return m, nil
 		case tea.KeyPgUp:
 			m.viewport.HalfViewUp()
 			return m, nil
 		case tea.KeyPgDown:
 			m.viewport.HalfViewDown()
 			return m, nil
-		case tea.KeyEnter:
-			if m.AwaitingConfirm {
-				return m, nil
-			}
-			content := strings.TrimSpace(m.Input.Value())
-			if content == "" {
-				return m, nil
-			}
-
-			if strings.HasPrefix(content, "/") {
-				return m.handleSlashCommand(content)
-			}
-
-			m.history = append(m.history, content)
-			m.historyIndex = -1
-
-			m.Messages = append(m.Messages, DisplayMessage{
-				Role:    "user",
-				Content: content,
-			})
-			m.updateViewport()
-
-			m.Input.SetValue("")
-			return m, m.sendMessage(content)
 		case tea.KeyRunes:
 			if m.AwaitingConfirm {
 				char := string(msg.Runes)
@@ -239,24 +216,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		
-		viewportHeight := m.height - 10
+
+		viewportHeight := m.height - 12
 		if viewportHeight < 5 {
 			viewportHeight = 5
 		}
-		
+
 		viewportWidth := m.width - 2
 		if viewportWidth < 10 {
 			viewportWidth = 10
 		}
-		inputWidth := m.width - 8
+		inputWidth := m.width - 4
 		if inputWidth < 10 {
 			inputWidth = 10
 		}
-		
+
 		m.viewport.Width = viewportWidth
 		m.viewport.Height = viewportHeight
-		m.Input.Width = inputWidth
+		m.Input.SetWidth(inputWidth)
+		m.Input.SetHeight(2)
 		m.ready = true
 		m.updateViewport()
 
@@ -501,7 +479,7 @@ func (m Model) renderStatusBar() string {
 		left = fmt.Sprintf("代理: %s", m.CurrentAgent)
 	}
 
-	right := "Ctrl+C:退出 | Ctrl+L:清屏 | PgUp/PgDn:翻页 | /help:帮助"
+	right := "Ctrl+C:退出 | Ctrl+S/F5:发送 | /help:帮助"
 
 	spacing := m.width - len(left) - len(right) - 2
 	if spacing < 0 {
@@ -513,10 +491,7 @@ func (m Model) renderStatusBar() string {
 
 func (m Model) renderInput() string {
 	inputView := m.Input.View()
-	if inputView == "" {
-		inputView = "│ "
-	}
-	return inputPromptStyle.Render("╭─ 输入") + "\n" +
+	return inputPromptStyle.Render("╭─ 输入 (Ctrl+S 发送)") + "\n" +
 		inputStyle.Render(inputView) + "\n" +
 		"╰─► "
 }
@@ -646,7 +621,8 @@ func (m Model) getHelpText() string {
 │  快捷键:                                                          │
 │  Ctrl+C           退出                                           │
 │  Ctrl+L           清屏                                           │
-│  ↑/↓              浏览历史 / 滚动消息                             │
+│  Ctrl+S / F5      发送消息                                        │
+│  Enter            插入换行符 (支持多行粘贴)                        │
 │  PgUp/PgDn        翻页                                           │
 │  鼠标滚轮          滚动消息                                       │
 ╰─────────────────────────────────────────────────────────────────╯`

@@ -26,6 +26,7 @@
 ## ✨ Features
 
 - 🗨️ **Interactive Chat Mode** - Modern terminal UI based on BubbleTea with scrolling support
+- 📝 **Multi-line Input Support** - Paste multi-line code and text directly, format preserved
 - ⚡ **Autonomous Quest Mode** - Automatically plan and execute multi-step programming tasks
 - 🔍 **Code Review** - Security vulnerabilities, performance issues, code quality detection
 - 🤖 **Sub-Agent System** - Specialized agents: Coder, Reviewer, Architect, Tester, Debugger
@@ -87,10 +88,11 @@ go build -o accil .
 
 **For Windows users:**
 ```powershell
-# Build (requires .exe suffix)
-go build -o accil.exe .
+# Build and install globally (recommended)
+build.bat
 
-# Run
+# Or build manually
+go build -o accil.exe .
 .\accil.exe
 
 # Or run directly (recommended for beginners)
@@ -148,12 +150,15 @@ Type these in interactive mode:
 |----------|-------------|
 | `Ctrl+C` | Quit |
 | `Ctrl+L` | Clear screen |
-| `↑/↓` | Browse history / Scroll messages |
+| `Ctrl+S` / `F5` | Send message |
+| `Enter` | Insert newline (multi-line paste supported) |
 | `PgUp/PgDn` | Page up/down |
 | `Mouse Wheel` | Scroll messages |
 | `Shift+Mouse Drag` | Select and copy text |
 
-> **Tip**: Since mouse scrolling is enabled, direct mouse dragging is captured by the terminal. Hold `Shift` while dragging to select text for copying.
+> **Tips**:
+> - Paste multi-line text directly, format will be preserved automatically
+> - Press `Ctrl+S` or `F5` to send your message
 
 ## 🔧 Configuration
 
@@ -241,6 +246,7 @@ accil/
 │   └── review/             # Code review
 ├── main.go
 ├── go.mod
+├── build.bat               # Windows build script
 ├── install.sh              # Linux/macOS installation script
 ├── install.bat             # Windows installation script
 ├── Makefile
