@@ -14,8 +14,14 @@ model: "gpt-4o"
 # Maximum tokens in response
 max_tokens: 4096
 
+# Maximum tool calls per request (prevents infinite loops)
+max_tool_calls: 30
+
 # Auto-approve all operations (dangerous!)
 auto_approve: false
+
+# Command execution timeout in seconds (default: 120)
+command_timeout: 120
 
 # Blocked commands (always blocked regardless of auto_approve)
 block_list:

@@ -2,6 +2,7 @@ package tools
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,6 +18,9 @@ import (
 	"time"
 )
 
+// DefaultCommandTimeout 默认命令执行超时时间
+const DefaultCommandTimeout = 120 * time.Second
+
 // ToolResult represents the result of a tool execution
 type ToolResult struct {
 	Success bool   `json:"success"`
@@ -26,16 +30,23 @@ type ToolResult struct {
 
 // Executor handles tool execution
 type Executor struct {
-	workDir   string
-	blockList []string
+	workDir        string
+	blockList      []string
+	commandTimeout time.Duration
 }
 
 // NewExecutor creates a new tool executor
 func NewExecutor(workDir string, blockList []string) *Executor {
 	return &Executor{
-		workDir:   workDir,
-		blockList: blockList,
+		workDir:        workDir,
+		blockList:      blockList,
+		commandTimeout: DefaultCommandTimeout,
 	}
+}
+
+// SetCommandTimeout sets the command execution timeout
+func (e *Executor) SetCommandTimeout(timeout time.Duration) {
+	e.commandTimeout = timeout
 }
 
 // Execute executes a tool call
@@ -232,16 +243,29 @@ func (e *Executor) runCommand(params map[string]interface{}) *ToolResult {
 		}
 	}
 
+	// Create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), e.commandTimeout)
+	defer cancel()
+
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", command)
+		cmd = exec.CommandContext(ctx, "cmd", "/c", command)
 	} else {
-		cmd = exec.Command("sh", "-c", command)
+		cmd = exec.CommandContext(ctx, "sh", "-c", command)
 	}
 
 	cmd.Dir = e.workDir
 
 	output, err := cmd.CombinedOutput()
+
+	// Check if context was cancelled (timeout)
+	if ctx.Err() == context.DeadlineExceeded {
+		return &ToolResult{
+			Success: false,
+			Error:   fmt.Sprintf("Command timed out after %v: %s", e.commandTimeout, command),
+		}
+	}
+
 	if err != nil {
 		return &ToolResult{
 			Success: false,

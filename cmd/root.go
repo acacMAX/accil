@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/accil/accil/internal/agent"
 	"github.com/accil/accil/internal/ai"
@@ -191,7 +192,7 @@ func runRoot(cmd *cobra.Command, args []string) {
 
 func runSingleShot(cfg *config.Config, prompt string) {
 	client := ai.NewClient(cfg.APIKey, cfg.BaseURL, cfg.Model)
-	executor := tools.NewExecutor(cfg.WorkDir, cfg.BlockList)
+	executor := newExecutor(cfg)
 
 	messages := []ai.Message{
 		{Role: "system", Content: getSystemPrompt(cfg.WorkDir)},
@@ -274,7 +275,7 @@ func runInteractive(cfg *config.Config) {
 	}
 
 	client := ai.NewClient(cfg.APIKey, cfg.BaseURL, cfg.Model)
-	executor := tools.NewExecutor(cfg.WorkDir, cfg.BlockList)
+	executor := newExecutor(cfg)
 	contextMgr, _ := appcontext.NewManager(cfg.WorkDir)
 
 	app := NewApp(cfg, client, executor, sessionMgr, sess, contextMgr)
@@ -304,7 +305,7 @@ func runInteractive(cfg *config.Config) {
 func runQuest(cmd *cobra.Command, args []string) {
 	cfg := loadConfig()
 	client := ai.NewClient(cfg.APIKey, cfg.BaseURL, cfg.Model)
-	executor := tools.NewExecutor(cfg.WorkDir, cfg.BlockList)
+	executor := newExecutor(cfg)
 
 	goal := strings.Join(args, " ")
 	planner := quest.NewPlanner(client, executor)
@@ -359,7 +360,7 @@ func runQuest(cmd *cobra.Command, args []string) {
 func runReview(cmd *cobra.Command, args []string) {
 	cfg := loadConfig()
 	client := ai.NewClient(cfg.APIKey, cfg.BaseURL, cfg.Model)
-	executor := tools.NewExecutor(cfg.WorkDir, cfg.BlockList)
+	executor := newExecutor(cfg)
 
 	reviewer := review.NewReviewer(client, executor)
 	ctx := context.Background()
@@ -409,7 +410,7 @@ func runAgentList(cmd *cobra.Command, args []string) {
 func runAgentTask(cmd *cobra.Command, args []string) {
 	cfg := loadConfig()
 	client := ai.NewClient(cfg.APIKey, cfg.BaseURL, cfg.Model)
-	executor := tools.NewExecutor(cfg.WorkDir, cfg.BlockList)
+	executor := newExecutor(cfg)
 
 	agentID := args[0]
 	task := strings.Join(args[1:], " ")
@@ -480,6 +481,15 @@ func loadConfig() *config.Config {
 	}
 
 	return cfg
+}
+
+// newExecutor 创建配置好的工具执行器
+func newExecutor(cfg *config.Config) *tools.Executor {
+	executor := newExecutor(cfg)
+	if cfg.CommandTimeout > 0 {
+		executor.SetCommandTimeout(time.Duration(cfg.CommandTimeout) * time.Second)
+	}
+	return executor
 }
 
 func getSystemPrompt(workDir string) string {

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Multi-line Input Support** - Paste multi-line code and text directly with format preserved
 - `build.bat` script for Windows - build and install globally with one command
 - Textarea component replaces textinput for better multi-line editing
+- **Command Timeout** - Commands now timeout after 120 seconds by default (configurable)
+- `command_timeout` config option to set custom timeout
 
 ### Changed
 - **Keyboard shortcuts updated**:

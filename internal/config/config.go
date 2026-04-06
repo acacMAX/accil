@@ -8,22 +8,24 @@ import (
 )
 
 type Config struct {
-	APIKey        string   `mapstructure:"api_key"`
-	BaseURL       string   `mapstructure:"base_url"`
-	Model         string   `mapstructure:"model"`
-	MaxTokens     int      `mapstructure:"max_tokens"`
-	MaxToolCalls  int      `mapstructure:"max_tool_calls"` // 最大工具调用次数
-	AutoApprove   bool     `mapstructure:"auto_approve"`
-	BlockList     []string `mapstructure:"block_list"`
-	WorkDir       string   `mapstructure:"workdir"`
+	APIKey         string   `mapstructure:"api_key"`
+	BaseURL        string   `mapstructure:"base_url"`
+	Model          string   `mapstructure:"model"`
+	MaxTokens      int      `mapstructure:"max_tokens"`
+	MaxToolCalls   int      `mapstructure:"max_tool_calls"` // 最大工具调用次数
+	AutoApprove    bool     `mapstructure:"auto_approve"`
+	BlockList      []string `mapstructure:"block_list"`
+	WorkDir        string   `mapstructure:"workdir"`
+	CommandTimeout int      `mapstructure:"command_timeout"` // 命令执行超时（秒）
 }
 
 var DefaultConfig = Config{
-	BaseURL:       "https://api.openai.com/v1",
-	Model:         "gpt-4o",
-	MaxTokens:     4096,
-	MaxToolCalls:  30, // 增加到30次
-	AutoApprove:   false,
+	BaseURL:        "https://api.openai.com/v1",
+	Model:          "gpt-4o",
+	MaxTokens:      4096,
+	MaxToolCalls:   30, // 增加到30次
+	AutoApprove:    false,
+	CommandTimeout: 120, // 默认 120 秒
 	BlockList: []string{
 		"rm -rf /",
 		"rm -rf /*",
@@ -54,8 +56,10 @@ func Init() error {
 	viper.SetDefault("base_url", DefaultConfig.BaseURL)
 	viper.SetDefault("model", DefaultConfig.Model)
 	viper.SetDefault("max_tokens", DefaultConfig.MaxTokens)
+	viper.SetDefault("max_tool_calls", DefaultConfig.MaxToolCalls)
 	viper.SetDefault("auto_approve", DefaultConfig.AutoApprove)
 	viper.SetDefault("block_list", DefaultConfig.BlockList)
+	viper.SetDefault("command_timeout", DefaultConfig.CommandTimeout)
 
 	// Environment variables
 	viper.SetEnvPrefix("AI")
