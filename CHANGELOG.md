@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-04-06
+
+### Added
+- **Web Search Tool** - AI can now search the web for information using DuckDuckGo
+- **Web Fetch Tool** - AI can fetch and read content from URLs
+- Documentation for Shift+drag to select/copy text in terminal
+
+### Changed
+- Security response time updated to 7×24 hours
+- Security contact email updated to acac74151@gmail.com
+
 ## [Unreleased]
 
 ### Added

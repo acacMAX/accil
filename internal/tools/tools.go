@@ -4,13 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
+	"time"
 )
 
 // ToolResult represents the result of a tool execution
@@ -59,6 +63,10 @@ func (e *Executor) Execute(name string, arguments string) *ToolResult {
 		return e.searchCode(params)
 	case "glob":
 		return e.glob(params)
+	case "web_search":
+		return e.webSearch(params)
+	case "web_fetch":
+		return e.webFetch(params)
 	default:
 		return &ToolResult{
 			Success: false,
@@ -70,7 +78,7 @@ func (e *Executor) Execute(name string, arguments string) *ToolResult {
 // NeedsConfirmation returns true if the tool needs user confirmation
 func (e *Executor) NeedsConfirmation(name string, arguments string) (bool, string, error) {
 	switch name {
-	case "read_file", "list_dir", "search_code", "glob":
+	case "read_file", "list_dir", "search_code", "glob", "web_search", "web_fetch":
 		return false, "", nil
 	case "write_file", "edit_file", "run_command":
 		params := make(map[string]interface{})
@@ -373,5 +381,122 @@ func (e *Executor) glob(params map[string]interface{}) *ToolResult {
 	return &ToolResult{
 		Success: true,
 		Output:  output.String(),
+	}
+}
+
+// webSearch performs a web search using DuckDuckGo or similar service
+func (e *Executor) webSearch(params map[string]interface{}) *ToolResult {
+	query, ok := params["query"].(string)
+	if !ok {
+		return &ToolResult{Success: false, Error: "query parameter is required"}
+	}
+
+	// Use DuckDuckGo Instant Answer API (no API key required)
+	escapedQuery := url.QueryEscape(query)
+	searchURL := "https://api.duckduckgo.com/?q=" + escapedQuery + "&format=json&no_html=1"
+
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	resp, err := client.Get(searchURL)
+	if err != nil {
+		return &ToolResult{Success: false, Error: fmt.Sprintf("Search failed: %v", err)}
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return &ToolResult{Success: false, Error: fmt.Sprintf("Failed to read response: %v", err)}
+	}
+
+	// Parse the response
+	var ddgResponse struct {
+		AbstractText   string `json:"AbstractText"`
+		AbstractSource string `json:"AbstractSource"`
+		AbstractURL    string `json:"AbstractURL"`
+		Heading        string `json:"Heading"`
+		RelatedTopics  []struct {
+			Text string `json:"Text"`
+			URL  string `json:"FirstURL"`
+		} `json:"RelatedTopics"`
+		Results []struct {
+			Text string `json:"Text"`
+			URL  string `json:"FirstURL"`
+		} `json:"Results"`
+	}
+
+	if err := json.Unmarshal(body, &ddgResponse); err != nil {
+		return &ToolResult{Success: false, Error: fmt.Sprintf("Failed to parse response: %v", err)}
+	}
+
+	var output strings.Builder
+	output.WriteString(fmt.Sprintf("Search results for: %s\n\n", query))
+
+	if ddgResponse.Heading != "" && ddgResponse.AbstractText != "" {
+		output.WriteString(fmt.Sprintf("📚 %s\n%s\nSource: %s\nURL: %s\n\n",
+			ddgResponse.Heading,
+			ddgResponse.AbstractText,
+			ddgResponse.AbstractSource,
+			ddgResponse.AbstractURL))
+	}
+
+	if len(ddgResponse.RelatedTopics) > 0 {
+		output.WriteString("🔗 Related Topics:\n")
+		for i, topic := range ddgResponse.RelatedTopics {
+			if i >= 5 {
+				break
+			}
+			if topic.Text != "" {
+				output.WriteString(fmt.Sprintf("  • %s\n", topic.Text))
+				if topic.URL != "" {
+					output.WriteString(fmt.Sprintf("    URL: %s\n", topic.URL))
+				}
+			}
+		}
+	}
+
+	if output.Len() == 0 {
+		output.WriteString("No results found. Try a different search query.")
+	}
+
+	return &ToolResult{
+		Success: true,
+		Output:  output.String(),
+	}
+}
+
+// webFetch fetches content from a URL
+func (e *Executor) webFetch(params map[string]interface{}) *ToolResult {
+	targetURL, ok := params["url"].(string)
+	if !ok {
+		return &ToolResult{Success: false, Error: "url parameter is required"}
+	}
+
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	resp, err := client.Get(targetURL)
+	if err != nil {
+		return &ToolResult{Success: false, Error: fmt.Sprintf("Fetch failed: %v", err)}
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return &ToolResult{Success: false, Error: fmt.Sprintf("Failed to read response: %v", err)}
+	}
+
+	// Limit response size
+	maxSize := 10000
+	content := string(body)
+	if len(content) > maxSize {
+		content = content[:maxSize] + "\n... (truncated)"
+	}
+
+	return &ToolResult{
+		Success: true,
+		Output:  content,
 	}
 }

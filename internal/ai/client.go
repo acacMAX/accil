@@ -387,5 +387,39 @@ func GetDefaultTools() []Tool {
 				},
 			},
 		},
+		{
+			Type: "function",
+			Function: FunctionDef{
+				Name:        "web_search",
+				Description: "Search the web for information using DuckDuckGo. Returns relevant search results.",
+				Parameters: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"query": map[string]interface{}{
+							"type":        "string",
+							"description": "The search query",
+						},
+					},
+					"required": []string{"query"},
+				},
+			},
+		},
+		{
+			Type: "function",
+			Function: FunctionDef{
+				Name:        "web_fetch",
+				Description: "Fetch content from a URL. Use this to read web pages or API responses.",
+				Parameters: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"url": map[string]interface{}{
+							"type":        "string",
+							"description": "The URL to fetch content from",
+						},
+					},
+					"required": []string{"url"},
+				},
+			},
+		},
 	}
 }

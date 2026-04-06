@@ -200,6 +200,8 @@ AI can invoke the following tools:
 | `list_dir` | List directory contents | No |
 | `search_code` | Regex search in code | No |
 | `glob` | File pattern matching | No |
+| `web_search` | Search the web for information | No |
+| `web_fetch` | Fetch content from a URL | No |
 
 ## 🔒 Safety Mechanisms
 
