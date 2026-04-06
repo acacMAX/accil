@@ -116,7 +116,10 @@ echo %PATH% | findstr /C:"%INSTALL_DIR%" >nul
 if %ERRORLEVEL% equ 0 (
     echo [OK] Already in PATH
 ) else (
-    :: Get current user PATH
+    :: Add to current session immediately
+    set "PATH=%PATH%;%INSTALL_DIR%"
+
+    :: Get current user PATH from registry
     for /f "skip=2 tokens=2,*" %%a in ('reg query "HKCU\Environment" /v PATH 2^>nul') do set CURRENT_USER_PATH=%%b
     if "!CURRENT_USER_PATH!"=="" (
         setx PATH "%INSTALL_DIR%" >nul
@@ -125,6 +128,7 @@ if %ERRORLEVEL% equ 0 (
     )
     if !ERRORLEVEL! equ 0 (
         echo [OK] Added to user PATH
+        echo     You can now use 'accil' command globally
     ) else (
         echo [WARNING] Could not add to PATH automatically
         echo Please add manually: %INSTALL_DIR%
@@ -151,14 +155,14 @@ echo ========================================
 echo.
 echo Install location: %INSTALL_DIR%\accil.exe
 echo.
-echo IMPORTANT: Please follow these steps:
-echo   1. Close ALL command prompt windows
-echo   2. Open a NEW command prompt
-echo   3. Type: accil
+echo USAGE:
+echo   - You can use 'accil' command NOW in this window
+echo   - For NEW command prompts, simply type: accil
 echo.
-echo If 'accil' is not recognized, run:
-echo   setx PATH "%%PATH%%;%INSTALL_DIR%"
-echo Then restart your command prompt.
+echo If 'accil' is not recognized in new windows:
+echo   1. Open System Properties ^> Environment Variables
+echo   2. Add to PATH: %INSTALL_DIR%
+echo   Or run: setx PATH "%%PATH%%;%INSTALL_DIR%"
 echo.
 
 set /p run_now="Run ACCIL now? (y/n): "
