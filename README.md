@@ -22,7 +22,12 @@
 </div>
 
 ---
+## ⚠️ Project Description
+1.This project uses AI programming.
+2.This project was created on a whim and may not be maintained long-term. If you need a reliable and powerful AI programming tool, I recommend using [Qoder](https://qoder.com/).
+3.I don't want to write documentation. All previous versions were uploaded by AI, so there will be AI traces.
 
+Finally, thank you for using this project. If you like it, feel free to give me a Star 🌟
 ## ✨ Features
 
 - 🗨️ **Interactive Chat Mode** - Modern terminal UI based on BubbleTea with scrolling support
