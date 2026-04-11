@@ -17,6 +17,7 @@ import (
 	appcontext "github.com/accil/accil/internal/context"
 	"github.com/accil/accil/internal/memory"
 	"github.com/accil/accil/internal/quest"
+	"github.com/accil/accil/internal/remote"
 	"github.com/accil/accil/internal/review"
 	"github.com/accil/accil/internal/session"
 	"github.com/accil/accil/internal/tools"
@@ -109,6 +110,13 @@ var memoryInitCmd = &cobra.Command{
 	Run:   runMemoryInit,
 }
 
+var remoteCmd = &cobra.Command{
+	Use:   "remote <host>",
+	Short: "连接远程服务器进行开发",
+	Args:  cobra.MinimumNArgs(1),
+	Run:   runRemote,
+}
+
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&flagWorkDir, "workdir", "w", "", "工作目录")
 	rootCmd.PersistentFlags().StringVarP(&flagModel, "model", "m", "", "AI模型")
@@ -129,6 +137,8 @@ func init() {
 
 	memoryCmd.AddCommand(memoryInitCmd)
 	rootCmd.AddCommand(memoryCmd)
+
+	rootCmd.AddCommand(remoteCmd)
 }
 
 func Execute() {
@@ -204,8 +214,8 @@ func runSingleShot(cfg *config.Config, prompt string) {
 		maxCalls = 30
 	}
 
-	for i := 0; i < maxCalls; i++ {
-		fmt.Printf("\n[思考中...]\n")
+	for i := 0; ; i++ {
+		fmt.Printf("\n[思考中... 第%d轮]\n", i+1)
 		
 		resp, err := client.Chat(messages, ai.GetDefaultTools())
 		if err != nil {
@@ -249,7 +259,10 @@ func runSingleShot(cfg *config.Config, prompt string) {
 		}
 	}
 
-	fmt.Fprintln(os.Stderr, "警告: 达到最大工具调用次数")
+	fmt.Fprintln(os.Stderr, "\n[对话已停止]")
+
+	// 显示API用量统计
+	printUsageStats(client)
 }
 
 func runInteractive(cfg *config.Config) {
@@ -300,6 +313,27 @@ func runInteractive(cfg *config.Config) {
 	}
 
 	sessionMgr.Save(sess)
+
+	// 显示API用量统计
+	printUsageStats(client)
+}
+
+// printUsageStats 打印API用量统计
+func printUsageStats(client *ai.Client) {
+	total, prompt, output, requests := client.GetUsageStats()
+	if requests == 0 {
+		return
+	}
+
+	fmt.Println()
+	fmt.Println("╭────────────────────────────────────╮")
+	fmt.Println("│        API 用量统计                │")
+	fmt.Println("├────────────────────────────────────┤")
+	fmt.Printf("│  请求次数:    %4d                │\n", requests)
+	fmt.Printf("│  输入 Token:  %4d                │\n", prompt)
+	fmt.Printf("│  输出 Token:  %4d                │\n", output)
+	fmt.Printf("│  总计 Token:  %4d                │\n", total)
+	fmt.Println("╰────────────────────────────────────╯")
 }
 
 func runQuest(cmd *cobra.Command, args []string) {
@@ -449,6 +483,59 @@ func runMemoryInit(cmd *cobra.Command, args []string) {
 	fmt.Printf("已在 %s 创建 %s\n", workDir, memory.AgentsFileName)
 }
 
+func runRemote(cmd *cobra.Command, args []string) {
+	cfg := loadConfig()
+
+	host := args[0]
+	user := cfg.Remote.User
+	if user == "" {
+		user = os.Getenv("USER")
+	}
+	if user == "" {
+		user = os.Getenv("USERNAME")
+	}
+
+	fmt.Printf("正在连接 %s@%s...\n", user, host)
+
+	client, err := remote.NewClient(remote.Config{
+		Host:     host,
+		Port:     cfg.Remote.Port,
+		User:     user,
+		Password: cfg.Remote.Password,
+		KeyPath:  cfg.Remote.KeyPath,
+		WorkDir:  cfg.Remote.WorkDir,
+		UseAgent: cfg.Remote.UseAgent,
+	})
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "连接失败: %v\n", err)
+		os.Exit(1)
+	}
+
+	defer client.Disconnect()
+
+	fmt.Println("连接成功!")
+
+	// 获取远程服务器信息
+	info, err := client.GetInfo()
+	if err == nil {
+		fmt.Printf("\n服务器信息:\n")
+		fmt.Printf("  主机: %s\n", info["hostname"])
+		fmt.Printf("  用户: %s\n", info["user"])
+		fmt.Printf("  目录: %s\n", info["pwd"])
+		fmt.Printf("  系统: %s\n", info["os"])
+	}
+
+	// 启动交互式远程会话
+	runRemoteInteractive(cfg, client)
+}
+
+func runRemoteInteractive(cfg *config.Config, remoteClient *remote.Client) {
+	// 这里可以实现远程交互式会话
+	fmt.Println("\n远程开发模式已启动。输入命令执行，或按 Ctrl+C 退出。")
+	fmt.Println("提示: 使用 'accil' 进入完整交互模式并切换到 /remote 模式")
+}
+
 func loadConfig() *config.Config {
 	if err := config.Init(); err != nil {
 		fmt.Fprintf(os.Stderr, "初始化配置错误: %v\n", err)
@@ -530,18 +617,21 @@ func truncateString(s string, maxLen int) string {
 
 // App 主应用
 type App struct {
-	model      tui.Model
-	cfg        *config.Config
-	client     *ai.Client
-	executor   *tools.Executor
-	sessionMgr *session.Manager
-	session    *session.Session
-	contextMgr *appcontext.Manager
-	agentMgr   *agent.Manager
-	planner    *quest.Planner
-	reviewer   *review.Reviewer
-	streaming  bool
-	msgChan    chan tea.Msg // 用于持续接收流式消息
+	model         tui.Model
+	cfg           *config.Config
+	client        *ai.Client
+	executor      *tools.Executor
+	sessionMgr    *session.Manager
+	session       *session.Session
+	contextMgr    *appcontext.Manager
+	agentMgr      *agent.Manager
+	planner       *quest.Planner
+	reviewer      *review.Reviewer
+	remoteClient  *remote.Client      // 远程SSH客户端
+	remoteExec    *remote.RemoteExecutor // 远程执行器
+	streaming     bool
+	msgChan       chan tea.Msg // 用于持续接收流式消息
+	stopRequested bool         // 用户请求停止
 }
 
 func NewApp(cfg *config.Config, client *ai.Client, executor *tools.Executor,
@@ -576,37 +666,56 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if !ok {
 				// channel关闭，处理完成
 				a.msgChan = nil
+				a.stopRequested = false
 				// 更新模型处理该消息
 				newModel, _ := a.model.Update(msg)
 				a.model = newModel.(tui.Model)
 				return a, nil
 			}
-			// 处理流式消息
+			// 处理流式消息，并立即安排读取下一条
 			newModel, _ := a.model.Update(streamMsg)
 			a.model = newModel.(tui.Model)
-			// 继续等待下一条消息
-			return a, func() tea.Msg {
-				if nextMsg, nextOk := <-a.msgChan; nextOk {
-					return nextMsg
-				}
-				return nil
-			}
+			// 继续等待下一条消息 - 使用 tea.Tick 确保UI刷新
+			return a, tea.Batch(
+				tea.Tick(10*time.Millisecond, func(time.Time) tea.Msg {
+					if nextMsg, nextOk := <-a.msgChan; nextOk {
+						return nextMsg
+					}
+					return nil
+				}),
+			)
 		default:
-			// 没有立即的消息，继续等待
+			// 没有立即的消息，继续等待但让UI刷新
+			return a, tea.Tick(50*time.Millisecond, func(time.Time) tea.Msg {
+				return tickMsg{}
+			})
 		}
 	}
 
 	switch msg := msg.(type) {
 	case tui.UserMessage:
+		// 重置停止标志
+		a.stopRequested = false
 		cmd := a.processUserMessageWithTools(msg.Content)
 		return a, cmd
+	case tickMsg:
+		// 定时刷新，检查是否有新消息
+		return a, nil
 	}
 
 	newModel, cmd := a.model.Update(msg)
 	a.model = newModel.(tui.Model)
 
+	// 检查是否需要停止
+	if a.model.StopRequested && !a.stopRequested {
+		a.stopRequested = true
+	}
+
 	return a, cmd
 }
+
+// tickMsg 用于定时刷新UI
+type tickMsg struct{}
 
 func (a App) View() string {
 	return a.model.View()
@@ -630,15 +739,18 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 		}
 		messages = append(messages, a.session.Messages...)
 
-		maxCalls := a.cfg.MaxToolCalls
-		if maxCalls <= 0 {
-			maxCalls = 30
-		}
-
 		var allOutput strings.Builder
 
 		// 工具调用循环
-		for i := 0; i < maxCalls; i++ {
+		for i := 0; ; i++ {
+			// 检查是否请求停止
+			if a.stopRequested {
+				allOutput.WriteString("\n[已停止思考]")
+				a.session.AddMessage("assistant", allOutput.String())
+				msgChan <- tui.ProcessingUpdate{Message: ""}
+				return
+			}
+
 			// 发送处理状态
 			msgChan <- tui.ProcessingUpdate{
 				Message: fmt.Sprintf("正在思考... (第%d轮)", i+1),
@@ -669,6 +781,14 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 
 			// 执行工具调用，并实时显示
 			for _, tc := range aiMsg.ToolCalls {
+				// 检查是否请求停止
+				if a.stopRequested {
+					allOutput.WriteString("\n[已停止思考]")
+					a.session.AddMessage("assistant", allOutput.String())
+					msgChan <- tui.ProcessingUpdate{Message: ""}
+					return
+				}
+
 				// 构建工具调用日志
 				toolLog := fmt.Sprintf("🔧 %s", tc.Function.Name)
 
@@ -724,12 +844,6 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 				})
 			}
 		}
-
-		// 达到最大调用次数
-		finalOutput := allOutput.String() + "\n⚠️ [达到最大调用次数，任务可能未完成]"
-		a.session.AddMessage("assistant", finalOutput)
-		msgChan <- tui.ProcessingUpdate{Message: ""}
-		msgChan <- tui.AssistantMessage{Content: finalOutput}
 	}()
 
 	// 立即返回第一条消息

@@ -73,6 +73,17 @@ accil --quest "Build a simple web server with health check endpoint"
 accil review ./main.go
 ```
 
+### Remote Development
+```bash
+# Connect to remote server
+accil remote user@hostname
+
+# Or in interactive mode
+accil
+/remote
+/remote connect hostname
+```
+
 ---
 
 ## 🎯 Tips for Best Results
@@ -98,6 +109,11 @@ accil review ./main.go
    accil agent run tester "Write unit tests"
    ```
 
+6. **Remote Development**:
+   ```bash
+   accil remote user@myserver.com
+   ```
+
 ---
 
 ## 🔧 Troubleshooting
@@ -118,6 +134,11 @@ accil review ./main.go
 ### Tool Execution Not Visible
 - Make sure you're in interactive mode (`accil`)
 - Real-time display only works in TUI mode
+
+### SSH Connection Issues
+- Ensure SSH key is added to agent: `ssh-add ~/.ssh/id_rsa`
+- Or specify key path in config: `remote.key_path`
+- Check server is reachable: `ssh user@hostname`
 
 ---
 

@@ -35,12 +35,14 @@ Finally, thank you for using this project. If you like it, feel free to give me 
 - ⚡ **Autonomous Quest Mode** - Automatically plan and execute multi-step programming tasks
 - 🔍 **Code Review** - Security vulnerabilities, performance issues, code quality detection
 - 🤖 **Sub-Agent System** - Specialized agents: Coder, Reviewer, Architect, Tester, Debugger
+- 🌐 **Remote Development** - Connect to remote servers via SSH for remote coding
 - 📝 **File Operations** - Read, write, edit files with precise replacements
 - 💻 **Command Execution** - Execute shell commands with cross-platform support
 - 🧠 **Context Memory** - Project-aware assistance with automatic memory management
 - 🔒 **Safety First** - Confirmation for dangerous operations, command blacklist support
 - 💾 **Session Persistence** - Automatic conversation history saving
 - 🔄 **Real-Time Visibility** - Step-by-step display of AI thinking and tool execution
+- 📊 **API Usage Stats** - Display token usage statistics on exit
 
 ## 🚀 Quick Install
 
@@ -144,18 +146,23 @@ Type these in interactive mode:
 | `/help` | Show help message |
 | `/clear` | Clear conversation |
 | `/quit` | Exit program |
+| `/chat` | Enter chat mode |
 | `/quest` | Enter quest mode |
 | `/review` | Enter review mode |
 | `/agent` | Enter agent mode |
+| `/remote` | Enter remote development mode |
 | `/model <name>` | Change AI model |
+| `/context` | Show current context |
 
 ### Keyboard Shortcuts
 
 | Shortcut | Description |
 |----------|-------------|
-| `Ctrl+C` | Quit |
+| `Ctrl+C` | Quit (press twice to confirm) |
 | `Ctrl+L` | Clear screen |
 | `Ctrl+S` / `F5` | Send message |
+| `Ctrl+H` | Show/hide help |
+| `ESC` | Stop current thinking/output |
 | `Enter` | Insert newline (multi-line paste supported) |
 | `PgUp/PgDn` | Page up/down |
 | `Mouse Wheel` | Scroll messages |
@@ -189,6 +196,16 @@ block_list:
   - "rm -rf /*"
   - "mkfs"
 max_tool_calls: 30
+command_timeout: 120
+
+# Remote development configuration
+remote:
+  host: "your-server.com"
+  port: "22"
+  user: "username"
+  key_path: "~/.ssh/id_rsa"
+  workdir: "/home/user/project"
+  use_agent: true
 ```
 
 ### Environment Variables
@@ -225,6 +242,44 @@ AI can invoke the following tools:
 | `web_search` | Search the web for information | No |
 | `web_fetch` | Fetch content from a URL | No |
 
+## 🌐 Remote Development
+
+Connect to remote servers via SSH and develop directly on them:
+
+### Quick Start
+
+```bash
+# Connect to remote server
+accil remote user@hostname
+
+# Or enter remote mode in interactive session
+accil
+/remote
+/remote connect hostname
+```
+
+### Remote Tools
+
+When connected to a remote server, all file operations work remotely:
+
+| Tool | Description |
+|------|-------------|
+| `read_file` | Read remote file contents |
+| `write_file` | Write to remote files |
+| `edit_file` | Edit remote files |
+| `run_command` | Execute commands on remote server |
+| `list_dir` | List remote directory contents |
+| `search_code` | Search code on remote server |
+| `glob` | Match remote files |
+
+### Authentication Methods
+
+The remote client tries authentication in this order:
+1. SSH Agent (if `use_agent: true`)
+2. Private key file (specified by `key_path`)
+3. Default SSH keys (`~/.ssh/id_rsa`, `~/.ssh/id_ed25519`)
+4. Password (if configured)
+
 ## 🔒 Safety Mechanisms
 
 - **Safe by Default**: All file writes and command executions require user confirmation
@@ -243,6 +298,7 @@ accil/
 │   ├── config/             # Configuration management
 │   ├── context/            # Context memory
 │   ├── memory/             # Project memory
+│   ├── remote/             # Remote SSH client
 │   ├── session/            # Session management
 │   ├── tools/              # Tool system
 │   ├── tui/                # Terminal UI

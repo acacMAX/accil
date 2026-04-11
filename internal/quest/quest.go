@@ -57,7 +57,7 @@ func NewPlanner(client *ai.Client, executor *tools.Executor) *Planner {
 	return &Planner{
 		client:   client,
 		executor: executor,
-		maxSteps: 20,
+		maxSteps: 0, // 0 表示无限制
 	}
 }
 

@@ -103,10 +103,14 @@ type StreamDelta struct {
 
 // Client represents an AI client
 type Client struct {
-	apiKey  string
-	baseURL string
-	model   string
-	client  *http.Client
+	apiKey        string
+	baseURL       string
+	model         string
+	client        *http.Client
+	TotalTokens   int // 总用量统计
+	PromptTokens  int // 输入token统计
+	OutputTokens  int // 输出token统计
+	RequestCount  int // 请求次数
 }
 
 // NewClient creates a new AI client
@@ -124,6 +128,10 @@ func NewClient(apiKey, baseURL, model string) *Client {
 			Timeout:   300 * time.Second, // 增加到5分钟
 			Transport: transport,
 		},
+		TotalTokens:  0,
+		PromptTokens: 0,
+		OutputTokens: 0,
+		RequestCount: 0,
 	}
 }
 
@@ -182,10 +190,29 @@ func (c *Client) Chat(messages []Message, tools []Tool) (*ChatResponse, error) {
 			continue
 		}
 
+		// 统计用量
+		c.TotalTokens += chatResp.Usage.TotalTokens
+		c.PromptTokens += chatResp.Usage.PromptTokens
+		c.OutputTokens += chatResp.Usage.CompletionTokens
+		c.RequestCount++
+
 		return &chatResp, nil
 	}
 
 	return nil, fmt.Errorf("请求失败，已重试3次: %w", lastErr)
+}
+
+// GetUsageStats 返回用量统计
+func (c *Client) GetUsageStats() (totalTokens, promptTokens, outputTokens, requestCount int) {
+	return c.TotalTokens, c.PromptTokens, c.OutputTokens, c.RequestCount
+}
+
+// ResetUsageStats 重置用量统计
+func (c *Client) ResetUsageStats() {
+	c.TotalTokens = 0
+	c.PromptTokens = 0
+	c.OutputTokens = 0
+	c.RequestCount = 0
 }
 
 // StreamChat sends a streaming chat completion request

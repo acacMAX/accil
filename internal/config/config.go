@@ -8,15 +8,27 @@ import (
 )
 
 type Config struct {
-	APIKey         string   `mapstructure:"api_key"`
-	BaseURL        string   `mapstructure:"base_url"`
-	Model          string   `mapstructure:"model"`
-	MaxTokens      int      `mapstructure:"max_tokens"`
-	MaxToolCalls   int      `mapstructure:"max_tool_calls"` // 最大工具调用次数
-	AutoApprove    bool     `mapstructure:"auto_approve"`
-	BlockList      []string `mapstructure:"block_list"`
-	WorkDir        string   `mapstructure:"workdir"`
-	CommandTimeout int      `mapstructure:"command_timeout"` // 命令执行超时（秒）
+	APIKey         string         `mapstructure:"api_key"`
+	BaseURL        string         `mapstructure:"base_url"`
+	Model          string         `mapstructure:"model"`
+	MaxTokens      int            `mapstructure:"max_tokens"`
+	MaxToolCalls   int            `mapstructure:"max_tool_calls"` // 最大工具调用次数
+	AutoApprove    bool           `mapstructure:"auto_approve"`
+	BlockList      []string       `mapstructure:"block_list"`
+	WorkDir        string         `mapstructure:"workdir"`
+	CommandTimeout int            `mapstructure:"command_timeout"` // 命令执行超时（秒）
+	Remote         RemoteConfig   `mapstructure:"remote"`         // 远程服务器配置
+}
+
+// RemoteConfig represents remote SSH server configuration
+type RemoteConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     string `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	KeyPath  string `mapstructure:"key_path"`
+	WorkDir  string `mapstructure:"workdir"`
+	UseAgent bool   `mapstructure:"use_agent"`
 }
 
 var DefaultConfig = Config{
