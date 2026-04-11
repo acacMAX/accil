@@ -789,7 +789,7 @@ func (a *App) handleRemoteConnect(host string) (tea.Model, tea.Cmd) {
 		Content:   fmt.Sprintf("正在连接 %s@%s...", user, host),
 		Timestamp: time.Now(),
 	})
-	a.model.Update(a.model)
+	a.model.RefreshViewport()
 
 	// 尝试连接
 	client, err := remote.NewClient(remote.Config{
@@ -809,7 +809,7 @@ func (a *App) handleRemoteConnect(host string) (tea.Model, tea.Cmd) {
 			Timestamp: time.Now(),
 		})
 		a.model.RemoteConnected = false
-		a.model.Update(a.model)
+		a.model.RefreshViewport()
 		return a, nil
 	}
 
@@ -828,10 +828,10 @@ func (a *App) handleRemoteConnect(host string) (tea.Model, tea.Cmd) {
 
 	a.model.Messages = append(a.model.Messages, tui.DisplayMessage{
 		Role:      "success",
-		Content:   fmt.Sprintf("已连接到远程服务器: %s%s", host, infoStr),
+		Content:   fmt.Sprintf("✓ 已连接到远程服务器: %s%s", host, infoStr),
 		Timestamp: time.Now(),
 	})
-	a.model.Update(a.model)
+	a.model.RefreshViewport()
 	return a, nil
 }
 
@@ -850,7 +850,7 @@ func (a *App) handleRemoteDisconnect() (tea.Model, tea.Cmd) {
 		Content:   "已断开远程连接。",
 		Timestamp: time.Now(),
 	})
-	a.model.Update(a.model)
+	a.model.RefreshViewport()
 	return a, nil
 }
 

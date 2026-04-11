@@ -974,6 +974,11 @@ func (m *Model) ShowConfirm(desc string, callback func(bool)) {
 	m.ConfirmCallback = callback
 }
 
+// RefreshViewport 公开方法，更新视口内容
+func (m *Model) RefreshViewport() {
+	m.updateViewport()
+}
+
 func max(a, b int) int {
 	if a > b {
 		return a
