@@ -615,6 +615,49 @@ func truncateString(s string, maxLen int) string {
 	return s[:maxLen-3] + "..."
 }
 
+// getSystemPrompt 获取系统提示（App 方法）
+func (a *App) getSystemPrompt() string {
+	basePrompt := `你是 Accil，一个 AI 驱动的自主编程助手。你可以：
+- 读取、写入和编辑文件
+- 执行 shell 命令
+- 搜索和分析代码
+- 规划和执行多步骤任务
+
+总是有帮助、准确和彻底。做更改时，解释你在做什么。
+
+重要：当用户给你一个任务时，你应该立即调用工具来完成任务，而不是只是说你"将要"做什么。直接执行操作！`
+
+	// 远程模式提示
+	if a.model.Mode == tui.ModeRemote && a.remoteClient != nil && a.model.RemoteConnected {
+		remotePrompt := fmt.Sprintf(`
+
+══════════════════════════════════════════════════════════════
+⚠️ 远程开发模式
+══════════════════════════════════════════════════════════════
+你已连接到远程服务器: %s
+
+所有文件操作和命令执行都将在远程服务器上进行，而不是本地！
+- 读取文件时，读取的是远程服务器上的文件
+- 写入文件时，写入的是远程服务器上的文件
+- 执行命令时，在远程服务器上执行
+
+请记住：你在操作的是远程服务器的文件系统！
+══════════════════════════════════════════════════════════════`, a.model.RemoteHost)
+		return basePrompt + remotePrompt
+	}
+
+	// 本地模式，加载项目上下文
+	mgr := memory.NewManager(a.cfg.WorkDir)
+	if mgr.Exists() {
+		content, err := mgr.LoadRaw()
+		if err == nil {
+			return basePrompt + "\n\n# 项目上下文\n\n" + content
+		}
+	}
+
+	return basePrompt
+}
+
 // App 主应用
 type App struct {
 	model         tui.Model
@@ -698,6 +741,15 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.stopRequested = false
 		cmd := a.processUserMessageWithTools(msg.Content)
 		return a, cmd
+
+	case tui.RemoteConnectMessage:
+		// 建立远程连接
+		return a.handleRemoteConnect(msg.Host)
+
+	case tui.RemoteDisconnectMessage:
+		// 断开远程连接
+		return a.handleRemoteDisconnect()
+
 	case tickMsg:
 		// 定时刷新，检查是否有新消息
 		return a, nil
@@ -721,6 +773,87 @@ func (a App) View() string {
 	return a.model.View()
 }
 
+// handleRemoteConnect 处理远程连接
+func (a *App) handleRemoteConnect(host string) (tea.Model, tea.Cmd) {
+	// 从配置获取用户名
+	user := a.cfg.Remote.User
+	if user == "" {
+		user = os.Getenv("USER")
+	}
+	if user == "" {
+		user = os.Getenv("USERNAME")
+	}
+
+	a.model.Messages = append(a.model.Messages, tui.DisplayMessage{
+		Role:      "system",
+		Content:   fmt.Sprintf("正在连接 %s@%s...", user, host),
+		Timestamp: time.Now(),
+	})
+	a.model.Update(a.model)
+
+	// 尝试连接
+	client, err := remote.NewClient(remote.Config{
+		Host:     host,
+		Port:     a.cfg.Remote.Port,
+		User:     user,
+		Password: a.cfg.Remote.Password,
+		KeyPath:  a.cfg.Remote.KeyPath,
+		WorkDir:  a.cfg.Remote.WorkDir,
+		UseAgent: a.cfg.Remote.UseAgent,
+	})
+
+	if err != nil {
+		a.model.Messages = append(a.model.Messages, tui.DisplayMessage{
+			Role:      "error",
+			Content:   fmt.Sprintf("连接失败: %v", err),
+			Timestamp: time.Now(),
+		})
+		a.model.RemoteConnected = false
+		a.model.Update(a.model)
+		return a, nil
+	}
+
+	// 连接成功
+	a.remoteClient = client
+	a.remoteExec = remote.NewRemoteExecutor(client)
+	a.model.RemoteConnected = true
+
+	// 获取服务器信息
+	info, _ := client.GetInfo()
+	infoStr := ""
+	if info != nil {
+		infoStr = fmt.Sprintf("\n主机: %s\n用户: %s\n目录: %s", 
+			info["hostname"], info["user"], info["pwd"])
+	}
+
+	a.model.Messages = append(a.model.Messages, tui.DisplayMessage{
+		Role:      "success",
+		Content:   fmt.Sprintf("已连接到远程服务器: %s%s", host, infoStr),
+		Timestamp: time.Now(),
+	})
+	a.model.Update(a.model)
+	return a, nil
+}
+
+// handleRemoteDisconnect 处理断开远程连接
+func (a *App) handleRemoteDisconnect() (tea.Model, tea.Cmd) {
+	if a.remoteClient != nil {
+		a.remoteClient.Disconnect()
+		a.remoteClient = nil
+		a.remoteExec = nil
+	}
+
+	a.model.RemoteConnected = false
+	a.model.RemoteHost = ""
+	a.model.Messages = append(a.model.Messages, tui.DisplayMessage{
+		Role:      "system",
+		Content:   "已断开远程连接。",
+		Timestamp: time.Now(),
+	})
+	a.model.Update(a.model)
+	return a, nil
+}
+
 // processUserMessageWithTools 处理用户消息并实时显示执行过程
 func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 	// 先添加用户消息到会话
@@ -735,7 +868,7 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 		defer close(msgChan)
 
 		messages := []ai.Message{
-			{Role: "system", Content: getSystemPrompt(a.cfg.WorkDir)},
+			{Role: "system", Content: a.getSystemPrompt()},
 		}
 		messages = append(messages, a.session.Messages...)
 
@@ -812,8 +945,15 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 					Args: toolLog,
 				}
 
-				// 执行工具
-				result := a.executor.Execute(tc.Function.Name, tc.Function.Arguments)
+				// 执行工具 - 根据模式选择执行器
+				var result *tools.ToolResult
+				if a.model.Mode == tui.ModeRemote && a.remoteExec != nil && a.model.RemoteConnected {
+					// 远程模式使用远程执行器
+					result = a.remoteExec.Execute(tc.Function.Name, tc.Function.Arguments)
+				} else {
+					// 本地模式使用本地执行器
+					result = a.executor.Execute(tc.Function.Name, tc.Function.Arguments)
+				}
 
 				// 显示执行结果
 				if result.Success {

@@ -823,30 +823,47 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 
 	case "/remote":
 		m.Mode = ModeRemote
-		if len(cmd) > 1 && cmd[1] == "disconnect" {
-			m.RemoteConnected = false
-			m.RemoteHost = ""
-			m.Messages = append(m.Messages, DisplayMessage{
-				Role:      "system",
-				Content:   "已断开远程连接。",
-				Timestamp: time.Now(),
-			})
-			m.updateViewport()
-		} else if len(cmd) > 1 {
-			m.RemoteHost = cmd[1]
-			m.Messages = append(m.Messages, DisplayMessage{
-				Role:      "system",
-				Content:   fmt.Sprintf("进入远程开发模式。目标服务器: %s\n请使用 /remote connect 命令建立连接。", cmd[1]),
-				Timestamp: time.Now(),
-			})
+		if len(cmd) > 1 {
+			switch cmd[1] {
+			case "connect":
+				// 建立连接
+				if m.RemoteHost == "" {
+					m.Messages = append(m.Messages, DisplayMessage{
+						Role:      "error",
+						Content:   "请先设置目标服务器: /remote <hostname>",
+						Timestamp: time.Now(),
+					})
+					m.updateViewport()
+				} else {
+					// 发送连接请求消息
+					return m, func() tea.Msg {
+						return RemoteConnectMessage{Host: m.RemoteHost}
+					}
+				}
+			case "disconnect":
+				// 发送断开连接请求
+				return m, func() tea.Msg {
+					return RemoteDisconnectMessage{}
+				}
+			default:
+				// 设置主机名
+				m.RemoteHost = cmd[1]
+				m.RemoteConnected = false
+				m.Messages = append(m.Messages, DisplayMessage{
+					Role:      "system",
+					Content:   fmt.Sprintf("已设置目标服务器: %s\n使用 /remote connect 建立连接", cmd[1]),
+					Timestamp: time.Now(),
+				})
+				m.updateViewport()
+			}
 		} else {
 			m.Messages = append(m.Messages, DisplayMessage{
 				Role:      "system",
-				Content:   "进入远程开发模式。\n用法:\n  /remote <host>       - 设置目标服务器\n  /remote connect      - 建立连接\n  /remote disconnect   - 断开连接",
+				Content:   "远程开发模式\n\n用法:\n  /remote <host>       - 设置目标服务器\n  /remote connect      - 建立连接\n  /remote disconnect   - 断开连接",
 				Timestamp: time.Now(),
 			})
+			m.updateViewport()
 		}
-		m.updateViewport()
 
 	case "/model":
 		if len(cmd) > 1 {
@@ -920,6 +937,14 @@ type ModeChangeMessage struct {
 type ProcessingUpdate struct {
 	Message string
 }
+
+// RemoteConnectMessage 远程连接请求
+type RemoteConnectMessage struct {
+	Host string
+}
+
+// RemoteDisconnectMessage 远程断开连接请求
+type RemoteDisconnectMessage struct{}
 
 // 设置方法
 func (m *Model) SetModelName(name string) {
