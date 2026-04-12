@@ -36,9 +36,12 @@ Finally, thank you for using this project. If you like it, feel free to give me 
 - 🔍 **Code Review** - Security vulnerabilities, performance issues, code quality detection
 - 🤖 **Sub-Agent System** - Specialized agents: Coder, Reviewer, Architect, Tester, Debugger
 - 🌐 **Remote Development** - Connect to remote servers via SSH for remote coding
+- 🎨 **Retro Terminal Splash** - Animated boot sequence with vintage CRT aesthetics
+- 🧠 **Enhanced AI Memory** - Code semantics, learning history, error pattern recognition
+- 🌐 **Advanced Context** - Code relationship graph, function tracking, project analysis
+- 💻 **Programming Assistant** - Code analysis, architecture design, refactoring, debugging
 - 📝 **File Operations** - Read, write, edit files with precise replacements
 - 💻 **Command Execution** - Execute shell commands with cross-platform support
-- 🧠 **Context Memory** - Project-aware assistance with automatic memory management
 - 🔒 **Safety First** - Confirmation for dangerous operations, command blacklist support
 - 💾 **Session Persistence** - Automatic conversation history saving
 - 🔄 **Real-Time Visibility** - Step-by-step display of AI thinking and tool execution

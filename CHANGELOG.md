@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2026-04-12
+
+### Added
+- **Enhanced AI Memory System** - Code semantics memory, learning history tracking, error pattern recognition
+- **Advanced Context Management** - Code relationship graph, function info tracking, intelligent project analysis
+- **Upgraded Programming Capabilities** - Code analysis, architecture design, refactoring, debugging support
+- **Retro Terminal Splash Screen** - Animated boot sequence with CRT scanline effects
+- **Interactive Remote Login Form** - Form-based SSH connection setup with visual feedback
+
+### Changed
+- Improved AI system prompts with detailed programming capability descriptions
+- Enhanced context module with code graph and dependency tracking
+- Memory module now supports semantic code understanding
+
 ## [0.3.0] - 2026-04-06
 
 ### Added
