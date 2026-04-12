@@ -997,8 +997,13 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 
 		var allOutput strings.Builder
 
-		// 工具调用循环
-		for i := 0; ; i++ {
+		// 工具调用循环 - 添加最大次数限制防止无限循环
+		maxToolCalls := a.cfg.MaxToolCalls
+		if maxToolCalls <= 0 {
+			maxToolCalls = 30
+		}
+
+		for i := 0; i < maxToolCalls; i++ {
 			// 检查是否请求停止
 			if a.stopRequested {
 				allOutput.WriteString("\n[已停止思考]")
@@ -1107,6 +1112,11 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 				})
 			}
 		}
+
+		// 如果达到最大工具调用次数，发送提示并结束
+		allOutput.WriteString(fmt.Sprintf("\n[达到最大工具调用次数限制 %d 次，思考结束]", maxToolCalls))
+		a.session.AddMessage("assistant", allOutput.String())
+		msgChan <- tui.ProcessingUpdate{Message: ""}
 	}()
 
 	// 立即返回第一条消息
