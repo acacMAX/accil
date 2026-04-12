@@ -17,36 +17,36 @@ import (
 
 // 核心配色方案 - 温暖琥珀色调
 const (
-	colorBg         = "#1a1a1a" // 深灰黑背景
-	colorFg         = "#e8e6e3" // 温暖白前景
-	colorAmber      = "#ffb347" // 琥珀色强调
-	colorAmberDim   = "#cc8a3c" // 暗琥珀色
-	colorGreen      = "#98c379" // 柔和绿
-	colorRed        = "#e06c75" // 柔和红
-	colorBlue       = "#61afef" // 柔和蓝
-	colorPurple     = "#c678dd" // 柔和紫
-	colorGray       = "#5c6370" // 中灰
-	colorGrayLight  = "#abb2bf" // 浅灰
-	colorCursor     = "#ffb347" // 光标色
+	colorBg        = "#1a1a1a" // 深灰黑背景
+	colorFg        = "#e8e6e3" // 温暖白前景
+	colorAmber     = "#ffb347" // 琥珀色强调
+	colorAmberDim  = "#cc8a3c" // 暗琥珀色
+	colorGreen     = "#98c379" // 柔和绿
+	colorRed       = "#e06c75" // 柔和红
+	colorBlue      = "#61afef" // 柔和蓝
+	colorPurple    = "#c678dd" // 柔和紫
+	colorGray      = "#5c6370" // 中灰
+	colorGrayLight = "#abb2bf" // 浅灰
+	colorCursor    = "#ffb347" // 光标色
 )
 
 // 样式定义 - 极简风格
 var (
 	// 主容器样式
 	containerStyle = lipgloss.NewStyle().
-		Background(lipgloss.Color(colorBg))
+			Background(lipgloss.Color(colorBg))
 
 	// 标题栏 - 简洁线条风格
 	titleStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorAmber)).
-		Background(lipgloss.Color(colorBg)).
-		Bold(true).
-		Padding(0, 1).
-		BorderStyle(lipgloss.Border{
-			Top:    "─",
-			Bottom: "─",
-			Left:   "│",
-			Right:  "│",
+			Foreground(lipgloss.Color(colorAmber)).
+			Background(lipgloss.Color(colorBg)).
+			Bold(true).
+			Padding(0, 1).
+			BorderStyle(lipgloss.Border{
+			Top:         "─",
+			Bottom:      "─",
+			Left:        "│",
+			Right:       "│",
 			TopLeft:     "╭",
 			TopRight:    "╮",
 			BottomLeft:  "├",
@@ -56,49 +56,49 @@ var (
 
 	// 模式标签 - 胶囊形状
 	modeCapsuleStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorBg)).
-		Background(lipgloss.Color(colorAmber)).
-		Bold(true).
-		Padding(0, 2).
-		Margin(0, 1)
+				Foreground(lipgloss.Color(colorBg)).
+				Background(lipgloss.Color(colorAmber)).
+				Bold(true).
+				Padding(0, 2).
+				Margin(0, 1)
 
 	modeChatStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorBg)).
-		Background(lipgloss.Color(colorGreen)).
-		Bold(true).
-		Padding(0, 2).
-		Margin(0, 1)
+			Foreground(lipgloss.Color(colorBg)).
+			Background(lipgloss.Color(colorGreen)).
+			Bold(true).
+			Padding(0, 2).
+			Margin(0, 1)
 
 	modeQuestStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorBg)).
-		Background(lipgloss.Color(colorPurple)).
-		Bold(true).
-		Padding(0, 2).
-		Margin(0, 1)
+			Foreground(lipgloss.Color(colorBg)).
+			Background(lipgloss.Color(colorPurple)).
+			Bold(true).
+			Padding(0, 2).
+			Margin(0, 1)
 
 	modeReviewStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorBg)).
-		Background(lipgloss.Color(colorBlue)).
-		Bold(true).
-		Padding(0, 2).
-		Margin(0, 1)
+			Foreground(lipgloss.Color(colorBg)).
+			Background(lipgloss.Color(colorBlue)).
+			Bold(true).
+			Padding(0, 2).
+			Margin(0, 1)
 
 	modeRemoteStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorBg)).
-		Background(lipgloss.Color(colorRed)).
-		Bold(true).
-		Padding(0, 2).
-		Margin(0, 1)
+			Foreground(lipgloss.Color(colorBg)).
+			Background(lipgloss.Color(colorRed)).
+			Bold(true).
+			Padding(0, 2).
+			Margin(0, 1)
 
 	// 用户信息 - 右对齐标签
 	infoStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorGrayLight)).
-		Italic(true)
+			Foreground(lipgloss.Color(colorGrayLight)).
+			Italic(true)
 
 	// 消息样式 - 极简边框
 	userMsgBoxStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorAmber)).
-		BorderStyle(lipgloss.Border{
+			Foreground(lipgloss.Color(colorAmber)).
+			BorderStyle(lipgloss.Border{
 			Left: "▸",
 		}).
 		BorderForeground(lipgloss.Color(colorAmber)).
@@ -106,12 +106,12 @@ var (
 		MarginLeft(2)
 
 	userContentStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorFg)).
-		MarginLeft(4)
+				Foreground(lipgloss.Color(colorFg)).
+				MarginLeft(4)
 
 	assistantMsgBoxStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorGreen)).
-		BorderStyle(lipgloss.Border{
+				Foreground(lipgloss.Color(colorGreen)).
+				BorderStyle(lipgloss.Border{
 			Left: "◆",
 		}).
 		BorderForeground(lipgloss.Color(colorGreen)).
@@ -119,40 +119,40 @@ var (
 		MarginLeft(2)
 
 	assistantContentStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorFg)).
-		MarginLeft(4)
+				Foreground(lipgloss.Color(colorFg)).
+				MarginLeft(4)
 
 	systemMsgStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorGrayLight)).
-		Italic(true).
-		MarginLeft(2)
+			Foreground(lipgloss.Color(colorGrayLight)).
+			Italic(true).
+			MarginLeft(2)
 
 	toolMsgStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorBlue)).
-		MarginLeft(4)
+			Foreground(lipgloss.Color(colorBlue)).
+			MarginLeft(4)
 
 	errorMsgStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorRed)).
-		Bold(true).
-		MarginLeft(2)
+			Foreground(lipgloss.Color(colorRed)).
+			Bold(true).
+			MarginLeft(2)
 
 	successMsgStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorGreen)).
-		MarginLeft(2)
+			Foreground(lipgloss.Color(colorGreen)).
+			MarginLeft(2)
 
 	// 处理中动画样式
 	processingStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorAmber)).
-		Bold(true).
-		Blink(true)
+			Foreground(lipgloss.Color(colorAmber)).
+			Bold(true).
+			Blink(true)
 
 	// 输入区域 - 底部固定
 	inputBoxStyle = lipgloss.NewStyle().
-		BorderStyle(lipgloss.Border{
-			Top:    "─",
-			Left:   "│",
-			Right:  "│",
-			Bottom: "─",
+			BorderStyle(lipgloss.Border{
+			Top:         "─",
+			Left:        "│",
+			Right:       "│",
+			Bottom:      "─",
 			TopLeft:     "├",
 			TopRight:    "┤",
 			BottomLeft:  "╰",
@@ -163,34 +163,34 @@ var (
 		Background(lipgloss.Color(colorBg))
 
 	inputPromptStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorAmber)).
-		Bold(true)
+				Foreground(lipgloss.Color(colorAmber)).
+				Bold(true)
 
 	inputCursorStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorCursor)).
-		Background(lipgloss.Color(colorAmberDim))
+				Foreground(lipgloss.Color(colorCursor)).
+				Background(lipgloss.Color(colorAmberDim))
 
 	// 状态栏 - 极简底部
 	statusBarStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorGray)).
-		Background(lipgloss.Color(colorBg)).
-		Padding(0, 1)
+			Foreground(lipgloss.Color(colorGray)).
+			Background(lipgloss.Color(colorBg)).
+			Padding(0, 1)
 
 	statusActiveStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorAmber)).
-		Bold(true)
+				Foreground(lipgloss.Color(colorAmber)).
+				Bold(true)
 
 	// 滚动条样式
 	scrollbarStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorGray))
+			Foreground(lipgloss.Color(colorGray))
 
 	// 帮助面板
 	helpBoxStyle = lipgloss.NewStyle().
-		BorderStyle(lipgloss.Border{
-			Top:    "─",
-			Bottom: "─",
-			Left:   "│",
-			Right:  "│",
+			BorderStyle(lipgloss.Border{
+			Top:         "─",
+			Bottom:      "─",
+			Left:        "│",
+			Right:       "│",
 			TopLeft:     "╭",
 			TopRight:    "╮",
 			BottomLeft:  "╰",
@@ -201,32 +201,32 @@ var (
 		Background(lipgloss.Color(colorBg))
 
 	helpTitleStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorAmber)).
-		Bold(true).
-		Underline(true)
+			Foreground(lipgloss.Color(colorAmber)).
+			Bold(true).
+			Underline(true)
 
 	helpKeyStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorAmber)).
-		Bold(true)
+			Foreground(lipgloss.Color(colorAmber)).
+			Bold(true)
 
 	helpDescStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorGrayLight))
+			Foreground(lipgloss.Color(colorGrayLight))
 
 	// 确认对话框
 	confirmBoxStyle = lipgloss.NewStyle().
-		BorderStyle(lipgloss.ThickBorder()).
-		BorderForeground(lipgloss.Color(colorAmber)).
-		Padding(1, 3).
-		Background(lipgloss.Color(colorBg))
+			BorderStyle(lipgloss.ThickBorder()).
+			BorderForeground(lipgloss.Color(colorAmber)).
+			Padding(1, 3).
+			Background(lipgloss.Color(colorBg))
 
 	confirmTitleStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorAmber)).
-		Bold(true)
+				Foreground(lipgloss.Color(colorAmber)).
+				Bold(true)
 
 	// 时间戳样式
 	timestampStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorGray)).
-		Italic(true)
+			Foreground(lipgloss.Color(colorGray)).
+			Italic(true)
 )
 
 // Mode 运行模式
@@ -245,6 +245,15 @@ type DisplayMessage struct {
 	Role      string
 	Content   string
 	Timestamp time.Time
+}
+
+// RemoteForm 远程连接表单
+type RemoteForm struct {
+	Host     string
+	User     string
+	Password string
+	Port     string
+	Field    int // 0: host, 1: user, 2: password, 3: port
 }
 
 // Model TUI模型
@@ -277,6 +286,11 @@ type Model struct {
 	frameCount      int    // 动画帧计数
 	RemoteHost      string // 远程服务器地址
 	RemoteConnected bool   // 远程连接状态
+	ShowRemoteForm  bool   // 显示远程连接表单
+	RemoteForm      RemoteForm
+	// 启动画面控制
+	ShowSplash      bool      // 是否显示启动画面
+	SplashStartTime time.Time // 启动画面开始时间
 }
 
 // NewModel 创建新的TUI模型
@@ -290,15 +304,17 @@ func NewModel() Model {
 	vp := viewport.New(40, 10)
 
 	return Model{
-		Messages:     []DisplayMessage{},
-		Input:        ta,
-		viewport:     vp,
-		ready:        false,
-		history:      []string{},
-		historyIndex: -1,
-		renderer:     NewMarkdownRenderer(),
-		Mode:         ModeChat,
-		ModelName:    "unknown",
+		Messages:        []DisplayMessage{},
+		Input:           ta,
+		viewport:        vp,
+		ready:           false,
+		history:         []string{},
+		historyIndex:    -1,
+		renderer:        NewMarkdownRenderer(),
+		Mode:            ModeChat,
+		ModelName:       "unknown",
+		ShowSplash:      true,
+		SplashStartTime: time.Now(),
 	}
 }
 
@@ -326,9 +342,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tickMsg:
 		m.frameCount++
+
+		// 检查启动画面是否显示超过2秒
+		if m.ShowSplash && time.Since(m.SplashStartTime) > 2*time.Second {
+			m.ShowSplash = false
+		}
+
 		return m, m.tick()
 
 	case tea.KeyMsg:
+		// 启动画面模式下，任意键跳过
+		if m.ShowSplash {
+			m.ShowSplash = false
+			return m, nil
+		}
+
+		// 远程连接表单模式
+		if m.ShowRemoteForm {
+			return m.handleRemoteFormInput(msg)
+		}
+
 		switch msg.Type {
 		case tea.KeyCtrlC:
 			if !m.ShowQuitConfirm {
@@ -584,12 +617,21 @@ func (m Model) renderMessage(msg DisplayMessage) string {
 }
 
 func (m Model) View() string {
+	// 显示启动画面（持续2秒或直到用户按键）
+	if m.ShowSplash {
+		return m.renderSplash()
+	}
+
 	if !m.ready {
 		return m.renderSplash()
 	}
 
 	if m.ShowHelp {
 		return m.renderHelp()
+	}
+
+	if m.ShowRemoteForm {
+		return m.renderRemoteForm()
 	}
 
 	var sb strings.Builder
@@ -619,21 +661,97 @@ func (m Model) View() string {
 }
 
 func (m Model) renderSplash() string {
-	logo := `
-    ╭────────────────────────────────────╮
-    │                                    │
-    │    ▗▄▖ ▗▄▄▖ ▗▄▄▖ ▗▖  ▗▖ ▗▄▖       │
-    │   ▐▌ ▐▌▐▌   ▐▌   ▐▌  ▐▌▐▌ ▐▌      │
-    │   ▐▛▀▜▌▐▛▀▀▘▐▌   ▐▌  ▐▌▐▛▀▜▌      │
-    │   ▐▌ ▐▌▐▙▄▄▖▐▙▄▄▖▐▙▄▄▞▘▐▌ ▐▌      │
-    │                                    │
-    │         智能编程助手               │
-    │                                    │
-    ╰────────────────────────────────────╯
-`
-	return lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorAmber)).
-		Render(logo)
+	// 如果没有获取到终端大小，使用默认值
+	width := m.width
+	height := m.height
+	if width == 0 {
+		width = 80
+	}
+	if height == 0 {
+		height = 24
+	}
+
+	// 复古终端风格的启动动画帧
+	frames := []string{
+		`▗▄▖ ▗▄▄▖ ▗▄▄▖ ▗▖  ▗▖ ▗▄▖ 
+▐▌ ▐▌▐▌   ▐▌   ▐▌  ▐▌▐▌ ▐▌
+▐▛▀▜▌▐▛▀▀▘▐▌   ▐▌  ▐▌▐▛▀▜▌
+▐▌ ▐▌▐▙▄▄▖▐▙▄▄▖▐▙▄▄▞▘▐▌ ▐▌`,
+		`█████╗ ██████╗ ██████╗ ██╗██╗
+██╔══██╗██╔══██╗██╔══██╗██║██║
+███████║██████╔╝██████╔╝██║██║
+██╔══██║██╔══██╗██╔══██╗██║██║
+██║  ██║██████╔╝██████╔╝██║███████╗
+╚═╝  ╚═╝╚═════╝ ╚═════╝ ╚═╝╚══════╝`,
+	}
+
+	// 根据帧计数选择显示内容，创建闪烁效果
+	frameIndex := (m.frameCount / 10) % len(frames)
+	logo := frames[frameIndex]
+
+	// 复古终端装饰
+	decorations := []string{
+		"◆ SYSTEM BOOT ◆",
+		"◆ INITIALIZING ◆",
+		"◆ LOADING AI CORE ◆",
+		"◆ READY ◆",
+	}
+	decorIndex := (m.frameCount / 15) % len(decorations)
+
+	// 进度条动画
+	progressWidth := 40
+	progress := (m.frameCount * 2) % (progressWidth + 1)
+
+	// 使用 lipgloss 的 Place 函数来居中
+	centerStyle := lipgloss.NewStyle().Width(width).Align(lipgloss.Center)
+
+	// 构建内容块
+	var content strings.Builder
+
+	// Logo
+	logoStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(colorAmber))
+	content.WriteString(logoStyle.Render(logo))
+	content.WriteString("\n\n")
+
+	// Status
+	statusStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(colorGreen)).
+		Bold(true)
+	content.WriteString(statusStyle.Render(decorations[decorIndex]))
+	content.WriteString("\n\n")
+
+	// 进度条
+	progressText := "[" + strings.Repeat("█", progress) + strings.Repeat("░", progressWidth-progress) + "]"
+	progressStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(colorAmber))
+	content.WriteString(progressStyle.Render(progressText))
+	content.WriteString("\n\n")
+
+	// 版本信息
+	versionStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(colorGray))
+	content.WriteString(versionStyle.Render("v2.0 | AI-Powered Coding Assistant"))
+	content.WriteString("\n\n")
+
+	// 提示
+	hintStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(colorGrayLight)).
+		Italic(true)
+	content.WriteString(hintStyle.Render("按任意键继续..."))
+
+	// 垂直居中整个内容块
+	contentHeight := 14 // 估算内容高度
+	topPadding := (height - contentHeight) / 2
+	if topPadding < 0 {
+		topPadding = 0
+	}
+
+	// 组合最终输出
+	var result strings.Builder
+	for i := 0; i < topPadding; i++ {
+		result.WriteString("\n")
+	}
+	result.WriteString(centerStyle.Render(content.String()))
+
+	return result.String()
 }
 
 func (m Model) renderHeader() string {
@@ -768,6 +886,74 @@ func (m Model) renderHelp() string {
 		Render(helpTitleStyle.Render("  帮助  ") + "\n" + helpDescStyle.Render(helpText))
 }
 
+func (m Model) renderRemoteForm() string {
+	var sb strings.Builder
+
+	// 标题
+	title := helpTitleStyle.Render("  远程服务器连接  ")
+	sb.WriteString(title)
+	sb.WriteString("\n\n")
+
+	// 表单样式
+	fieldStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(colorFg))
+
+	activeFieldStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(colorAmber)).
+		Bold(true)
+
+	labelStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(colorGrayLight)).
+		Width(12)
+
+	// Host 字段
+	hostLabel := labelStyle.Render("主机:")
+	hostValue := m.RemoteForm.Host
+	if m.RemoteForm.Field == 0 {
+		hostValue = activeFieldStyle.Render(hostValue + "█")
+	}
+	sb.WriteString(fmt.Sprintf("  %s %s\n", hostLabel, fieldStyle.Render(hostValue)))
+
+	// User 字段
+	userLabel := labelStyle.Render("用户名:")
+	userValue := m.RemoteForm.User
+	if m.RemoteForm.Field == 1 {
+		userValue = activeFieldStyle.Render(userValue + "█")
+	}
+	sb.WriteString(fmt.Sprintf("  %s %s\n", userLabel, fieldStyle.Render(userValue)))
+
+	// Password 字段
+	passLabel := labelStyle.Render("密码:")
+	passValue := strings.Repeat("*", len(m.RemoteForm.Password))
+	if m.RemoteForm.Field == 2 {
+		passValue = activeFieldStyle.Render(passValue + "█")
+	}
+	sb.WriteString(fmt.Sprintf("  %s %s\n", passLabel, fieldStyle.Render(passValue)))
+
+	// Port 字段
+	portLabel := labelStyle.Render("端口:")
+	portValue := m.RemoteForm.Port
+	if portValue == "" {
+		portValue = "22"
+	}
+	if m.RemoteForm.Field == 3 {
+		portValue = activeFieldStyle.Render(portValue + "█")
+	}
+	sb.WriteString(fmt.Sprintf("  %s %s\n", portLabel, fieldStyle.Render(portValue)))
+
+	sb.WriteString("\n")
+
+	// 提示
+	hintStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(colorGray))
+	sb.WriteString(hintStyle.Render("  Tab/↓ 下一项  |  ↑ 上一项  |  Enter 连接  |  ESC 取消"))
+
+	return helpBoxStyle.
+		Width(m.width - 10).
+		Height(m.height - 6).
+		Render(sb.String())
+}
+
 func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 	cmd := strings.Fields(content)
 	if len(cmd) == 0 {
@@ -826,43 +1012,27 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 		if len(cmd) > 1 {
 			switch cmd[1] {
 			case "connect":
-				// 建立连接
-				if m.RemoteHost == "" {
-					m.Messages = append(m.Messages, DisplayMessage{
-						Role:      "error",
-						Content:   "请先设置目标服务器: /remote <hostname>",
-						Timestamp: time.Now(),
-					})
-					m.updateViewport()
-				} else {
-					// 发送连接请求消息
-					return m, func() tea.Msg {
-						return RemoteConnectMessage{Host: m.RemoteHost}
-					}
-				}
+				// 显示连接表单
+				m.ShowRemoteForm = true
+				m.RemoteForm = RemoteForm{Field: 0, Port: "22"}
+				m.Input.SetValue("")
 			case "disconnect":
 				// 发送断开连接请求
+				m.Input.SetValue("")
 				return m, func() tea.Msg {
 					return RemoteDisconnectMessage{}
 				}
 			default:
-				// 设置主机名
-				m.RemoteHost = cmd[1]
-				m.RemoteConnected = false
-				m.Messages = append(m.Messages, DisplayMessage{
-					Role:      "system",
-					Content:   fmt.Sprintf("已设置目标服务器: %s\n使用 /remote connect 建立连接", cmd[1]),
-					Timestamp: time.Now(),
-				})
-				m.updateViewport()
+				// 设置主机名并显示表单
+				m.ShowRemoteForm = true
+				m.RemoteForm = RemoteForm{Host: cmd[1], Field: 1, Port: "22"}
+				m.Input.SetValue("")
 			}
 		} else {
-			m.Messages = append(m.Messages, DisplayMessage{
-				Role:      "system",
-				Content:   "远程开发模式\n\n用法:\n  /remote <host>       - 设置目标服务器\n  /remote connect      - 建立连接\n  /remote disconnect   - 断开连接",
-				Timestamp: time.Now(),
-			})
-			m.updateViewport()
+			// 直接显示连接表单
+			m.ShowRemoteForm = true
+			m.RemoteForm = RemoteForm{Field: 0, Port: "22"}
+			m.Input.SetValue("")
 		}
 
 	case "/model":
@@ -940,7 +1110,10 @@ type ProcessingUpdate struct {
 
 // RemoteConnectMessage 远程连接请求
 type RemoteConnectMessage struct {
-	Host string
+	Host     string
+	User     string
+	Password string
+	Port     string
 }
 
 // RemoteDisconnectMessage 远程断开连接请求
@@ -991,4 +1164,77 @@ func truncateStr(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen] + "..."
+}
+
+func (m Model) handleRemoteFormInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEsc:
+		m.ShowRemoteForm = false
+		return m, nil
+
+	case tea.KeyTab, tea.KeyDown:
+		m.RemoteForm.Field = (m.RemoteForm.Field + 1) % 4
+		return m, nil
+
+	case tea.KeyUp:
+		m.RemoteForm.Field = (m.RemoteForm.Field - 1 + 4) % 4
+		return m, nil
+
+	case tea.KeyEnter:
+		// 提交表单
+		if m.RemoteForm.Host == "" || m.RemoteForm.User == "" {
+			return m, nil
+		}
+		port := m.RemoteForm.Port
+		if port == "" {
+			port = "22"
+		}
+		m.ShowRemoteForm = false
+		m.RemoteHost = m.RemoteForm.Host
+		return m, func() tea.Msg {
+			return RemoteConnectMessage{
+				Host:     m.RemoteForm.Host,
+				User:     m.RemoteForm.User,
+				Password: m.RemoteForm.Password,
+				Port:     port,
+			}
+		}
+
+	case tea.KeyBackspace:
+		switch m.RemoteForm.Field {
+		case 0:
+			if len(m.RemoteForm.Host) > 0 {
+				m.RemoteForm.Host = m.RemoteForm.Host[:len(m.RemoteForm.Host)-1]
+			}
+		case 1:
+			if len(m.RemoteForm.User) > 0 {
+				m.RemoteForm.User = m.RemoteForm.User[:len(m.RemoteForm.User)-1]
+			}
+		case 2:
+			if len(m.RemoteForm.Password) > 0 {
+				m.RemoteForm.Password = m.RemoteForm.Password[:len(m.RemoteForm.Password)-1]
+			}
+		case 3:
+			if len(m.RemoteForm.Port) > 0 {
+				m.RemoteForm.Port = m.RemoteForm.Port[:len(m.RemoteForm.Port)-1]
+			}
+		}
+		return m, nil
+
+	case tea.KeyRunes:
+		char := string(msg.Runes)
+		switch m.RemoteForm.Field {
+		case 0:
+			m.RemoteForm.Host += char
+		case 1:
+			m.RemoteForm.User += char
+		case 2:
+			m.RemoteForm.Password += char
+		case 3:
+			m.RemoteForm.Port += char
+		}
+		return m, nil
+	}
+
+	return m, nil
 }

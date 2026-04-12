@@ -13,62 +13,71 @@ import (
 type ContextType string
 
 const (
-	ContextFile      ContextType = "file"
-	ContextCode      ContextType = "code"
-	ContextCommand   ContextType = "command"
-	ContextDecision  ContextType = "decision"
-	ContextError     ContextType = "error"
-	ContextLearned   ContextType = "learned"
+	ContextFile     ContextType = "file"
+	ContextCode     ContextType = "code"
+	ContextCommand  ContextType = "command"
+	ContextDecision ContextType = "decision"
+	ContextError    ContextType = "error"
+	ContextLearned  ContextType = "learned"
+	// 新增上下文类型
+	ContextFunction   ContextType = "function"
+	ContextDependency ContextType = "dependency"
+	ContextPattern    ContextType = "pattern"
+	ContextTest       ContextType = "test"
 )
 
 // Entry represents a context entry
 type Entry struct {
-	ID          string      `json:"id"`
-	Type        ContextType `json:"type"`
-	Content     string      `json:"content"`
-	File        string      `json:"file,omitempty"`
-	Line        int         `json:"line,omitempty"`
-	Tags        []string    `json:"tags,omitempty"`
-	Importance  int         `json:"importance"` // 1-10
-	CreatedAt   time.Time   `json:"created_at"`
-	AccessCount int         `json:"access_count"`
-	LastAccessed time.Time  `json:"last_accessed"`
+	ID           string      `json:"id"`
+	Type         ContextType `json:"type"`
+	Content      string      `json:"content"`
+	File         string      `json:"file,omitempty"`
+	Line         int         `json:"line,omitempty"`
+	Tags         []string    `json:"tags,omitempty"`
+	Importance   int         `json:"importance"` // 1-10
+	CreatedAt    time.Time   `json:"created_at"`
+	AccessCount  int         `json:"access_count"`
+	LastAccessed time.Time   `json:"last_accessed"`
 }
 
 // Context manages conversation and project context
 type Context struct {
-	WorkDir      string          `json:"work_dir"`
-	Entries      []Entry         `json:"entries"`
-	ProjectInfo  *ProjectInfo    `json:"project_info,omitempty"`
-	RecentFiles  []string        `json:"recent_files"`
-	Decisions    []Decision      `json:"decisions"`
-	Patterns     []CodePattern   `json:"patterns"`
-	CreatedAt    time.Time       `json:"created_at"`
-	UpdatedAt    time.Time       `json:"updated_at"`
+	WorkDir     string        `json:"work_dir"`
+	Entries     []Entry       `json:"entries"`
+	ProjectInfo *ProjectInfo  `json:"project_info,omitempty"`
+	RecentFiles []string      `json:"recent_files"`
+	Decisions   []Decision    `json:"decisions"`
+	Patterns    []CodePattern `json:"patterns"`
+	// 新增：代码关系图谱
+	CodeGraph *CodeGraph `json:"code_graph,omitempty"`
+	// 新增：会话历史摘要
+	SessionSummary []string  `json:"session_summary,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 // ProjectInfo contains analyzed project information
 type ProjectInfo struct {
-	Name           string            `json:"name"`
-	Type           string            `json:"type"`
-	Language       string            `json:"language"`
-	Framework      string            `json:"framework,omitempty"`
-	Structure      map[string]string `json:"structure"`
-	EntryPoints    []string          `json:"entry_points"`
-	Dependencies   []string          `json:"dependencies"`
-	ConfigFiles    []string          `json:"config_files"`
-	TestFramework  string            `json:"test_framework,omitempty"`
-	CodeStyle      string            `json:"code_style,omitempty"`
+	Name          string            `json:"name"`
+	Type          string            `json:"type"`
+	Language      string            `json:"language"`
+	Framework     string            `json:"framework,omitempty"`
+	Structure     map[string]string `json:"structure"`
+	EntryPoints   []string          `json:"entry_points"`
+	Dependencies  []string          `json:"dependencies"`
+	ConfigFiles   []string          `json:"config_files"`
+	TestFramework string            `json:"test_framework,omitempty"`
+	CodeStyle     string            `json:"code_style,omitempty"`
 }
 
 // Decision represents a design decision
 type Decision struct {
-	ID          string    `json:"id"`
-	Topic       string    `json:"topic"`
-	Decision    string    `json:"decision"`
-	Rationale   string    `json:"rationale"`
-	Alternatives []string `json:"alternatives,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID           string    `json:"id"`
+	Topic        string    `json:"topic"`
+	Decision     string    `json:"decision"`
+	Rationale    string    `json:"rationale"`
+	Alternatives []string  `json:"alternatives,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 // CodePattern represents a discovered code pattern
@@ -77,6 +86,43 @@ type CodePattern struct {
 	Description string   `json:"description"`
 	Examples    []string `json:"examples"`
 	Frequency   int      `json:"frequency"`
+}
+
+// FunctionInfo 函数信息
+type FunctionInfo struct {
+	Name       string   `json:"name"`
+	File       string   `json:"file"`
+	Line       int      `json:"line"`
+	Signature  string   `json:"signature"`
+	Doc        string   `json:"doc"`
+	Calls      []string `json:"calls"`      // 调用的函数
+	CalledBy   []string `json:"called_by"`  // 被谁调用
+	Complexity int      `json:"complexity"` // 复杂度
+}
+
+// CodeGraph 代码关系图谱
+type CodeGraph struct {
+	Functions    map[string]*FunctionInfo `json:"functions"`
+	Files        map[string]*FileInfo     `json:"files"`
+	Dependencies []Dependency             `json:"dependencies"`
+}
+
+// FileInfo 文件信息
+type FileInfo struct {
+	Path      string   `json:"path"`
+	Package   string   `json:"package"`
+	Imports   []string `json:"imports"`
+	Functions []string `json:"functions"`
+	Types     []string `json:"types"`
+	LineCount int      `json:"line_count"`
+	TestFile  bool     `json:"test_file"`
+}
+
+// Dependency 依赖关系
+type Dependency struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+	Type string `json:"type"` // import, call, inherit
 }
 
 // Manager manages context
@@ -319,7 +365,7 @@ func (m *Manager) parseJSProject(info *ProjectInfo) {
 	}
 
 	var pkg struct {
-		Name        string                 `json:"name"`
+		Name         string                 `json:"name"`
 		Dependencies map[string]interface{} `json:"dependencies"`
 	}
 	if err := json.Unmarshal(packageJSON, &pkg); err != nil {
@@ -380,8 +426,8 @@ func (m *Manager) GetPromptContext() string {
 	var sb strings.Builder
 
 	if m.context.ProjectInfo != nil {
-		sb.WriteString(fmt.Sprintf("Project: %s (%s)\n", 
-			m.context.ProjectInfo.Name, 
+		sb.WriteString(fmt.Sprintf("Project: %s (%s)\n",
+			m.context.ProjectInfo.Name,
 			m.context.ProjectInfo.Language))
 	}
 
@@ -431,4 +477,194 @@ func calculateRelevance(entry Entry, keywords []string) float64 {
 	}
 
 	return float64(matches) / float64(len(keywords))
+}
+
+// ==================== 新增代码图谱功能 ====================
+
+// BuildCodeGraph 构建代码关系图谱
+func (m *Manager) BuildCodeGraph() error {
+	if m.context.CodeGraph == nil {
+		m.context.CodeGraph = &CodeGraph{
+			Functions: make(map[string]*FunctionInfo),
+			Files:     make(map[string]*FileInfo),
+		}
+	}
+
+	// 遍历项目文件
+	err := filepath.Walk(m.workDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
+
+		// 跳过隐藏文件和依赖目录
+		if strings.HasPrefix(info.Name(), ".") || strings.Contains(path, "node_modules") || strings.Contains(path, "vendor") {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		// 只分析代码文件
+		if !info.IsDir() && isCodeFile(path) {
+			m.analyzeFile(path)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	m.context.UpdatedAt = time.Now()
+	return m.Save()
+}
+
+// analyzeFile 分析单个文件
+func (m *Manager) analyzeFile(filePath string) {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return
+	}
+
+	relPath, _ := filepath.Rel(m.workDir, filePath)
+	lines := strings.Split(string(content), "\n")
+
+	fileInfo := &FileInfo{
+		Path:      relPath,
+		LineCount: len(lines),
+		TestFile:  strings.HasSuffix(filePath, "_test.go") || strings.Contains(filePath, ".test."),
+	}
+
+	// 简单分析：提取包名、导入、函数定义
+	for i, line := range lines {
+		line = strings.TrimSpace(line)
+
+		// 包名
+		if strings.HasPrefix(line, "package ") {
+			fileInfo.Package = strings.TrimPrefix(line, "package ")
+		}
+
+		// 导入
+		if strings.HasPrefix(line, "import ") || strings.HasPrefix(line, "\"") {
+			// 简化处理
+			if strings.Contains(line, "\"") {
+				parts := strings.Split(line, "\"")
+				if len(parts) >= 2 {
+					fileInfo.Imports = append(fileInfo.Imports, parts[1])
+				}
+			}
+		}
+
+		// 函数定义 (Go 风格)
+		if strings.HasPrefix(line, "func ") {
+			funcName := extractFuncName(line)
+			if funcName != "" {
+				fileInfo.Functions = append(fileInfo.Functions, funcName)
+
+				// 添加到函数图谱
+				m.context.CodeGraph.Functions[funcName] = &FunctionInfo{
+					Name:      funcName,
+					File:      relPath,
+					Line:      i + 1,
+					Signature: line,
+				}
+			}
+		}
+	}
+
+	m.context.CodeGraph.Files[relPath] = fileInfo
+}
+
+// extractFuncName 提取函数名
+func extractFuncName(line string) string {
+	// 简化处理：func Name(...) 或 func (r *Receiver) Name(...)
+	line = strings.TrimPrefix(line, "func ")
+	if idx := strings.Index(line, "("); idx != -1 {
+		before := line[:idx]
+		// 检查是否有接收器
+		if strings.HasPrefix(before, "(") {
+			// 有接收器，找接收器后的名称
+			if idx2 := strings.Index(line, ")"); idx2 != -1 {
+				after := strings.TrimSpace(line[idx2+1:])
+				if idx3 := strings.Index(after, "("); idx3 != -1 {
+					return strings.TrimSpace(after[:idx3])
+				}
+			}
+		} else {
+			return strings.TrimSpace(before)
+		}
+	}
+	return ""
+}
+
+// isCodeFile 检查是否为代码文件
+func isCodeFile(path string) bool {
+	extensions := []string{".go", ".js", ".ts", ".py", ".java", ".rs", ".cpp", ".c", ".h"}
+	for _, ext := range extensions {
+		if strings.HasSuffix(path, ext) {
+			return true
+		}
+	}
+	return false
+}
+
+// GetFunctionContext 获取函数上下文
+func (m *Manager) GetFunctionContext(funcName string) *FunctionInfo {
+	if m.context.CodeGraph == nil {
+		return nil
+	}
+	return m.context.CodeGraph.Functions[funcName]
+}
+
+// FindRelatedFunctions 查找相关函数
+func (m *Manager) FindRelatedFunctions(funcName string) []string {
+	if m.context.CodeGraph == nil {
+		return nil
+	}
+
+	funcInfo, exists := m.context.CodeGraph.Functions[funcName]
+	if !exists {
+		return nil
+	}
+
+	// 合并调用和被调用
+	related := make(map[string]bool)
+	for _, f := range funcInfo.Calls {
+		related[f] = true
+	}
+	for _, f := range funcInfo.CalledBy {
+		related[f] = true
+	}
+
+	var result []string
+	for f := range related {
+		result = append(result, f)
+	}
+	return result
+}
+
+// AddSessionSummary 添加会话摘要
+func (m *Manager) AddSessionSummary(summary string) {
+	m.context.SessionSummary = append(m.context.SessionSummary, summary)
+	// 只保留最近20条摘要
+	if len(m.context.SessionSummary) > 20 {
+		m.context.SessionSummary = m.context.SessionSummary[len(m.context.SessionSummary)-20:]
+	}
+	m.context.UpdatedAt = time.Now()
+	m.Save()
+}
+
+// GetSessionContext 获取会话上下文
+func (m *Manager) GetSessionContext() string {
+	if len(m.context.SessionSummary) == 0 {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString("## 会话历史\n")
+	for _, summary := range m.context.SessionSummary {
+		sb.WriteString(fmt.Sprintf("- %s\n", summary))
+	}
+	return sb.String()
 }

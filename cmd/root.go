@@ -216,7 +216,7 @@ func runSingleShot(cfg *config.Config, prompt string) {
 
 	for i := 0; ; i++ {
 		fmt.Printf("\n[思考中... 第%d轮]\n", i+1)
-		
+
 		resp, err := client.Chat(messages, ai.GetDefaultTools())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "错误: %v\n", err)
@@ -241,9 +241,9 @@ func runSingleShot(cfg *config.Config, prompt string) {
 		for _, tc := range msg.ToolCalls {
 			fmt.Printf("\n[执行] %s\n", tc.Function.Name)
 			fmt.Printf("  参数: %s\n", truncateString(tc.Function.Arguments, 50))
-			
+
 			result := executor.Execute(tc.Function.Name, tc.Function.Arguments)
-			
+
 			if result.Success {
 				fmt.Printf("[完成] %s\n", truncateString(result.Output, 100))
 			} else {
@@ -451,7 +451,7 @@ func runAgentTask(cmd *cobra.Command, args []string) {
 
 	mgr := agent.NewManager(client, executor)
 	ctx := context.Background()
-	
+
 	result, err := mgr.AssignTask(ctx, agentID, agent.Task{Description: task}, cfg.AutoApprove, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "错误: %v\n", err)
@@ -586,15 +586,69 @@ func getSystemPrompt(workDir string) string {
 - 搜索和分析代码
 - 规划和执行多步骤任务
 
-总是有帮助、准确和彻底。做更改时，解释你在做什么。
+## 核心编程能力
+
+### 1. 代码分析与理解
+- 深入理解代码结构和设计模式
+- 识别代码中的潜在问题和改进点
+- 分析函数依赖关系和调用链
+- 理解业务逻辑和数据流
+
+### 2. 代码编写标准
+- 编写清晰、可维护、高效的代码
+- 遵循语言特定的最佳实践和惯用法
+- 添加适当的错误处理和日志记录
+- 编写自文档化的代码，使用清晰的命名
+- 考虑边界情况和并发安全
+
+### 3. 代码审查能力
+- 识别潜在的错误和安全漏洞
+- 检查性能瓶颈和优化机会
+- 确保代码符合设计原则和模式
+- 验证错误处理的完整性
+- 评估代码的可测试性
+
+### 4. 架构设计
+- 设计可扩展、可维护的系统架构
+- 选择合适的设计模式解决特定问题
+- 考虑性能、安全性和可靠性
+- 创建清晰的模块边界和接口
+- 评估技术选型的利弊
+
+### 5. 重构与优化
+- 识别代码坏味道并进行重构
+- 优化性能关键路径
+- 改善代码可读性和可维护性
+- 消除重复代码
+- 简化复杂逻辑
+
+### 6. 调试与故障排除
+- 系统性定位问题根因
+- 使用日志和调试工具有效诊断
+- 提供可靠的修复方案
+- 预防类似问题再次发生
+
+## 工作原则
+- 总是有帮助、准确和彻底
+- 做更改时，解释你在做什么以及为什么
+- 优先修复根本原因而非症状
+- 保持代码的一致性和连贯性
+- 考虑变更对系统其他部分的影响
 
 重要：当用户给你一个任务时，你应该立即调用工具来完成任务，而不是只是说你"将要"做什么。直接执行操作！`
 
+	// 加载增强的记忆上下文
 	mgr := memory.NewManager(workDir)
 	if mgr.Exists() {
 		content, err := mgr.LoadRaw()
 		if err == nil {
-			return basePrompt + "\n\n# 项目上下文\n\n" + content
+			basePrompt += "\n\n# 项目上下文\n\n" + content
+		}
+
+		// 添加增强的记忆上下文
+		enhancedContext := mgr.GetEnhancedPromptContext()
+		if enhancedContext != "" {
+			basePrompt += "\n\n# 项目记忆\n\n" + enhancedContext
 		}
 	}
 
@@ -623,7 +677,54 @@ func (a *App) getSystemPrompt() string {
 - 搜索和分析代码
 - 规划和执行多步骤任务
 
-总是有帮助、准确和彻底。做更改时，解释你在做什么。
+## 核心编程能力
+
+### 1. 代码分析与理解
+- 深入理解代码结构和设计模式
+- 识别代码中的潜在问题和改进点
+- 分析函数依赖关系和调用链
+- 理解业务逻辑和数据流
+
+### 2. 代码编写标准
+- 编写清晰、可维护、高效的代码
+- 遵循语言特定的最佳实践和惯用法
+- 添加适当的错误处理和日志记录
+- 编写自文档化的代码，使用清晰的命名
+- 考虑边界情况和并发安全
+
+### 3. 代码审查能力
+- 识别潜在的错误和安全漏洞
+- 检查性能瓶颈和优化机会
+- 确保代码符合设计原则和模式
+- 验证错误处理的完整性
+- 评估代码的可测试性
+
+### 4. 架构设计
+- 设计可扩展、可维护的系统架构
+- 选择合适的设计模式解决特定问题
+- 考虑性能、安全性和可靠性
+- 创建清晰的模块边界和接口
+- 评估技术选型的利弊
+
+### 5. 重构与优化
+- 识别代码坏味道并进行重构
+- 优化性能关键路径
+- 改善代码可读性和可维护性
+- 消除重复代码
+- 简化复杂逻辑
+
+### 6. 调试与故障排除
+- 系统性定位问题根因
+- 使用日志和调试工具有效诊断
+- 提供可靠的修复方案
+- 预防类似问题再次发生
+
+## 工作原则
+- 总是有帮助、准确和彻底
+- 做更改时，解释你在做什么以及为什么
+- 优先修复根本原因而非症状
+- 保持代码的一致性和连贯性
+- 考虑变更对系统其他部分的影响
 
 重要：当用户给你一个任务时，你应该立即调用工具来完成任务，而不是只是说你"将要"做什么。直接执行操作！`
 
@@ -643,15 +744,29 @@ func (a *App) getSystemPrompt() string {
 
 请记住：你在操作的是远程服务器的文件系统！
 ══════════════════════════════════════════════════════════════`, a.model.RemoteHost)
-		return basePrompt + remotePrompt
+		basePrompt += remotePrompt
 	}
 
-	// 本地模式，加载项目上下文
+	// 本地模式，加载项目上下文和记忆
 	mgr := memory.NewManager(a.cfg.WorkDir)
 	if mgr.Exists() {
 		content, err := mgr.LoadRaw()
 		if err == nil {
-			return basePrompt + "\n\n# 项目上下文\n\n" + content
+			basePrompt += "\n\n# 项目上下文\n\n" + content
+		}
+
+		// 添加增强的记忆上下文
+		enhancedContext := mgr.GetEnhancedPromptContext()
+		if enhancedContext != "" {
+			basePrompt += "\n\n# 项目记忆\n\n" + enhancedContext
+		}
+	}
+
+	// 添加上下文管理器的信息
+	if a.contextMgr != nil {
+		ctxInfo := a.contextMgr.GetPromptContext()
+		if ctxInfo != "" {
+			basePrompt += "\n\n# 当前上下文\n\n" + ctxInfo
 		}
 	}
 
@@ -670,7 +785,7 @@ type App struct {
 	agentMgr      *agent.Manager
 	planner       *quest.Planner
 	reviewer      *review.Reviewer
-	remoteClient  *remote.Client      // 远程SSH客户端
+	remoteClient  *remote.Client         // 远程SSH客户端
 	remoteExec    *remote.RemoteExecutor // 远程执行器
 	streaming     bool
 	msgChan       chan tea.Msg // 用于持续接收流式消息
@@ -744,7 +859,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tui.RemoteConnectMessage:
 		// 建立远程连接
-		return a.handleRemoteConnect(msg.Host)
+		return a.handleRemoteConnect(msg.Host, msg.User, msg.Password, msg.Port)
 
 	case tui.RemoteDisconnectMessage:
 		// 断开远程连接
@@ -774,14 +889,22 @@ func (a App) View() string {
 }
 
 // handleRemoteConnect 处理远程连接
-func (a *App) handleRemoteConnect(host string) (tea.Model, tea.Cmd) {
-	// 从配置获取用户名
-	user := a.cfg.Remote.User
+func (a *App) handleRemoteConnect(host, user, password, port string) (tea.Model, tea.Cmd) {
+	// 如果表单中没有提供，从配置获取
+	if user == "" {
+		user = a.cfg.Remote.User
+	}
 	if user == "" {
 		user = os.Getenv("USER")
 	}
 	if user == "" {
 		user = os.Getenv("USERNAME")
+	}
+	if port == "" {
+		port = a.cfg.Remote.Port
+	}
+	if port == "" {
+		port = "22"
 	}
 
 	a.model.Messages = append(a.model.Messages, tui.DisplayMessage{
@@ -794,9 +917,9 @@ func (a *App) handleRemoteConnect(host string) (tea.Model, tea.Cmd) {
 	// 尝试连接
 	client, err := remote.NewClient(remote.Config{
 		Host:     host,
-		Port:     a.cfg.Remote.Port,
+		Port:     port,
 		User:     user,
-		Password: a.cfg.Remote.Password,
+		Password: password,
 		KeyPath:  a.cfg.Remote.KeyPath,
 		WorkDir:  a.cfg.Remote.WorkDir,
 		UseAgent: a.cfg.Remote.UseAgent,
@@ -822,7 +945,7 @@ func (a *App) handleRemoteConnect(host string) (tea.Model, tea.Cmd) {
 	info, _ := client.GetInfo()
 	infoStr := ""
 	if info != nil {
-		infoStr = fmt.Sprintf("\n主机: %s\n用户: %s\n目录: %s", 
+		infoStr = fmt.Sprintf("\n主机: %s\n用户: %s\n目录: %s",
 			info["hostname"], info["user"], info["pwd"])
 	}
 
