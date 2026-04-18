@@ -16,8 +16,9 @@
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20|%20macOS%20|%20Linux-lightgrey)](https://github.com/acacMAX/accil)
+[![Website](https://img.shields.io/badge/Website-cli.acz.qzz.io-blue)](https://cli.acz.qzz.io/)
 
-[English](README.md) | [中文](README_zh.md)
+[English](README.md) | [中文](README_zh.md) | [Website](https://cli.acz.qzz.io/)
 
 </div>
 
