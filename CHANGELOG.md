@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-04-12
+
+### Added
+- **ESC Key Stop Functionality** - Press ESC to immediately stop AI streaming output
+- **Enhanced AI Programming Capabilities** - 10 core programming capabilities including security, performance engineering, and modern DevOps practices
+- **Upgraded Agent System Prompts** - All 6 sub-agents (coder, reviewer, architect, tester, debugger, researcher) now have detailed, professional capability descriptions
+- **Keyboard Event Priority Handling** - Fixed keyboard shortcuts (Ctrl+C, ESC, scroll) during AI output streaming
+
+### Fixed
+- ESC key not working during AI streaming output
+- Keyboard shortcuts becoming unresponsive during streaming
+- Channel blocking issues in message processing loop
+
 ## [1.2.5] - 2026-04-12
 
 ### Added

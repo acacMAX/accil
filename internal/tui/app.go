@@ -372,26 +372,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case tea.KeyEsc:
-			if m.ShowHelp {
-				m.ShowHelp = false
-				return m, nil
-			}
-			if m.ShowQuitConfirm {
-				m.ShowQuitConfirm = false
-				m.QuitConfirmMsg = ""
-				return m, nil
-			}
-			if m.IsStreaming || m.ProcessingMsg != "" {
-				m.StopRequested = true
-				m.ProcessingMsg = ""
-				m.Messages = append(m.Messages, DisplayMessage{
-					Role:      "system",
-					Content:   "◼ 已停止",
-					Timestamp: time.Now(),
-				})
-				m.updateViewport()
-				return m, nil
-			}
+			// ESC键被按下，强制停止任何进行中的操作
+			m.StopRequested = true
+			m.IsStreaming = false
+			m.ProcessingMsg = ""
+			m.Messages = append(m.Messages, DisplayMessage{
+				Role:      "system",
+				Content:   "◼ 已停止",
+				Timestamp: time.Now(),
+			})
+			m.updateViewport()
+			return m, nil
 
 		case tea.KeyCtrlL:
 			m.Messages = []DisplayMessage{}
@@ -536,6 +527,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.updateViewport()
 
 	case ProcessingUpdate:
+		m.IsStreaming = true
 		m.ProcessingMsg = msg.Message
 		m.Messages = append(m.Messages, DisplayMessage{
 			Role:      "system",

@@ -593,6 +593,8 @@ func getSystemPrompt(workDir string) string {
 - 识别代码中的潜在问题和改进点
 - 分析函数依赖关系和调用链
 - 理解业务逻辑和数据流
+- 快速掌握陌生代码库的核心机制
+- 逆向工程理解未文档化的代码
 
 ### 2. 代码编写标准
 - 编写清晰、可维护、高效的代码
@@ -600,6 +602,9 @@ func getSystemPrompt(workDir string) string {
 - 添加适当的错误处理和日志记录
 - 编写自文档化的代码，使用清晰的命名
 - 考虑边界情况和并发安全
+- 实现防御式编程，处理异常输入
+- 编写符合 SOLID 原则的代码
+- 确保代码可测试性，便于单元测试
 
 ### 3. 代码审查能力
 - 识别潜在的错误和安全漏洞
@@ -607,6 +612,9 @@ func getSystemPrompt(workDir string) string {
 - 确保代码符合设计原则和模式
 - 验证错误处理的完整性
 - 评估代码的可测试性
+- 发现潜在的竞态条件和死锁
+- 检查资源泄漏和内存管理问题
+- 评估 API 设计的合理性
 
 ### 4. 架构设计
 - 设计可扩展、可维护的系统架构
@@ -614,6 +622,9 @@ func getSystemPrompt(workDir string) string {
 - 考虑性能、安全性和可靠性
 - 创建清晰的模块边界和接口
 - 评估技术选型的利弊
+- 设计高可用和容错系统
+- 规划数据流和状态管理
+- 设计合理的分层架构
 
 ### 5. 重构与优化
 - 识别代码坏味道并进行重构
@@ -621,12 +632,55 @@ func getSystemPrompt(workDir string) string {
 - 改善代码可读性和可维护性
 - 消除重复代码
 - 简化复杂逻辑
+- 应用设计模式改进架构
+- 优化数据库查询和数据结构
+- 改进算法复杂度和空间效率
 
 ### 6. 调试与故障排除
 - 系统性定位问题根因
 - 使用日志和调试工具有效诊断
 - 提供可靠的修复方案
 - 预防类似问题再次发生
+- 分析堆栈跟踪和错误日志
+- 使用二分法快速定位问题
+- 编写最小复现用例
+- 设计防御性修复防止复发
+
+### 7. 测试与质量保障
+- 编写全面的单元测试用例
+- 设计集成测试和端到端测试
+- 实现测试驱动开发(TDD)
+- 确保高代码覆盖率
+- 编写性能基准测试
+- 进行模糊测试发现边界问题
+- 设计测试夹具和模拟对象
+
+### 8. 安全编程
+- 识别和修复安全漏洞
+- 防范注入攻击和 XSS
+- 正确处理敏感数据和加密
+- 实施身份验证和授权
+- 遵循安全编码规范
+- 进行威胁建模
+- 审计依赖项的安全性
+
+### 9. 性能工程
+- 识别性能瓶颈
+- 优化内存使用和分配
+- 减少 CPU 和 I/O 开销
+- 实现缓存策略
+- 优化并发和并行处理
+- 进行性能剖析和调优
+- 设计可扩展的高性能系统
+
+### 10. 现代开发实践
+- 使用版本控制最佳实践
+- 编写清晰的提交信息
+- 进行代码评审和协作
+- 持续集成和持续部署
+- 容器化和云原生开发
+- API 设计和文档编写
+- 技术债务管理
 
 ## 工作原则
 - 总是有帮助、准确和彻底
@@ -634,6 +688,9 @@ func getSystemPrompt(workDir string) string {
 - 优先修复根本原因而非症状
 - 保持代码的一致性和连贯性
 - 考虑变更对系统其他部分的影响
+- 提供多种解决方案并说明利弊
+- 学习并应用项目特定的约定
+- 在不确定时询问澄清而非猜测
 
 重要：当用户给你一个任务时，你应该立即调用工具来完成任务，而不是只是说你"将要"做什么。直接执行操作！`
 
@@ -817,34 +874,42 @@ func (a App) Init() tea.Cmd {
 }
 
 func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// 如果正在处理流式消息，持续从channel读取
+	// 如果正在处理流式消息
 	if a.msgChan != nil {
+		// 键盘事件（ESC、Ctrl+C 等）必须先交给 UI 处理
+		if keyMsg, ok := msg.(tea.KeyMsg); ok {
+			newModel, cmd := a.model.Update(keyMsg)
+			a.model = newModel.(tui.Model)
+			// 检查 UI 层是否请求停止（比如按了 ESC）
+			if a.model.StopRequested {
+				close(a.msgChan)
+				a.msgChan = nil
+				a.model.StopRequested = false
+				return a, cmd
+			}
+			return a, cmd
+		}
+
+		// 非阻塞读取一条流式消息
 		select {
 		case streamMsg, ok := <-a.msgChan:
 			if !ok {
-				// channel关闭，处理完成
+				// channel 已关闭，流式输出结束
 				a.msgChan = nil
-				a.stopRequested = false
-				// 更新模型处理该消息
-				newModel, _ := a.model.Update(msg)
+				newModel, cmd := a.model.Update(msg)
 				a.model = newModel.(tui.Model)
-				return a, nil
+				return a, cmd
 			}
-			// 处理流式消息，并立即安排读取下一条
+			// 把流式消息交给 UI 模型处理
 			newModel, _ := a.model.Update(streamMsg)
 			a.model = newModel.(tui.Model)
-			// 继续等待下一条消息 - 使用 tea.Tick 确保UI刷新
-			return a, tea.Batch(
-				tea.Tick(10*time.Millisecond, func(time.Time) tea.Msg {
-					if nextMsg, nextOk := <-a.msgChan; nextOk {
-						return nextMsg
-					}
-					return nil
-				}),
-			)
+			// 用短 tick 来继续读取下一条消息
+			return a, tea.Tick(1*time.Millisecond, func(time.Time) tea.Msg {
+				return tickMsg{}
+			})
 		default:
-			// 没有立即的消息，继续等待但让UI刷新
-			return a, tea.Tick(50*time.Millisecond, func(time.Time) tea.Msg {
+			// 暂时没有消息，短暂等待后继续
+			return a, tea.Tick(10*time.Millisecond, func(time.Time) tea.Msg {
 				return tickMsg{}
 			})
 		}
@@ -872,11 +937,6 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	newModel, cmd := a.model.Update(msg)
 	a.model = newModel.(tui.Model)
-
-	// 检查是否需要停止
-	if a.model.StopRequested && !a.stopRequested {
-		a.stopRequested = true
-	}
 
 	return a, cmd
 }
@@ -986,9 +1046,25 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 	msgChan := make(chan tea.Msg, 100)
 	a.msgChan = msgChan // 保存到App中以便Update方法使用
 
+	// 安全的channel发送函数
+	safeSend := func(m tea.Msg) bool {
+		defer func() {
+			recover() // 捕获向已关闭channel发送的panic
+		}()
+		select {
+		case msgChan <- m:
+			return true
+		default:
+			return false
+		}
+	}
+
 	// 启动goroutine进行异步处理
 	go func() {
-		defer close(msgChan)
+		defer func() {
+			recover() // 防止panic
+			close(msgChan)
+		}()
 
 		messages := []ai.Message{
 			{Role: "system", Content: a.getSystemPrompt()},
@@ -1008,18 +1084,20 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 			if a.stopRequested {
 				allOutput.WriteString("\n[已停止思考]")
 				a.session.AddMessage("assistant", allOutput.String())
-				msgChan <- tui.ProcessingUpdate{Message: ""}
+				safeSend(tui.ProcessingUpdate{Message: ""})
 				return
 			}
 
 			// 发送处理状态
-			msgChan <- tui.ProcessingUpdate{
+			if !safeSend(tui.ProcessingUpdate{
 				Message: fmt.Sprintf("正在思考... (第%d轮)", i+1),
+			}) {
+				return // channel已关闭
 			}
 
 			resp, err := a.client.Chat(messages, ai.GetDefaultTools())
 			if err != nil {
-				msgChan <- tui.ErrorMessage{Error: err}
+				safeSend(tui.ErrorMessage{Error: err})
 				return
 			}
 
@@ -1030,13 +1108,15 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 			if aiMsg.Content != "" {
 				allOutput.WriteString(aiMsg.Content)
 				allOutput.WriteString("\n")
-				msgChan <- tui.AssistantMessage{Content: aiMsg.Content}
+				if !safeSend(tui.AssistantMessage{Content: aiMsg.Content}) {
+					return
+				}
 			}
 
 			// 没有工具调用时返回结果
 			if len(aiMsg.ToolCalls) == 0 {
 				a.session.AddMessage("assistant", allOutput.String())
-				msgChan <- tui.ProcessingUpdate{Message: ""} // 清除处理提示
+				safeSend(tui.ProcessingUpdate{Message: ""}) // 清除处理提示
 				return
 			}
 
@@ -1046,31 +1126,63 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 				if a.stopRequested {
 					allOutput.WriteString("\n[已停止思考]")
 					a.session.AddMessage("assistant", allOutput.String())
-					msgChan <- tui.ProcessingUpdate{Message: ""}
+					safeSend(tui.ProcessingUpdate{Message: ""})
 					return
 				}
 
-				// 构建工具调用日志
-				toolLog := fmt.Sprintf("🔧 %s", tc.Function.Name)
-
-				// 解析参数以显示更易读的信息
+				// 构建详细的工具调用日志
 				var args map[string]interface{}
-				if err := json.Unmarshal([]byte(tc.Function.Arguments), &args); err == nil {
+				json.Unmarshal([]byte(tc.Function.Arguments), &args)
+
+				// 根据工具类型构建易读的操作描述
+				var operation string
+				switch tc.Function.Name {
+				case "read_file":
 					if path, ok := args["path"].(string); ok {
-						toolLog += fmt.Sprintf(" → %s", path)
+						operation = fmt.Sprintf("📖 读取文件: %s", path)
 					}
+				case "write_file":
+					if path, ok := args["path"].(string); ok {
+						operation = fmt.Sprintf("📝 写入文件: %s", path)
+					}
+				case "edit_file":
+					if path, ok := args["path"].(string); ok {
+						operation = fmt.Sprintf("✏️  编辑文件: %s", path)
+					}
+				case "run_command":
 					if cmd, ok := args["command"].(string); ok {
-						toolLog += fmt.Sprintf(": %s", truncateString(cmd, 30))
+						operation = fmt.Sprintf("⚡ 执行命令: %s", truncateString(cmd, 40))
 					}
-					if content, ok := args["content"].(string); ok {
-						toolLog += fmt.Sprintf(" (%d 字符)", len(content))
+				case "list_dir":
+					if path, ok := args["path"].(string); ok {
+						operation = fmt.Sprintf("📂 列出目录: %s", path)
 					}
+				case "search_code":
+					if query, ok := args["query"].(string); ok {
+						operation = fmt.Sprintf("🔍 搜索代码: %s", truncateString(query, 40))
+					}
+				case "glob":
+					if pattern, ok := args["pattern"].(string); ok {
+						operation = fmt.Sprintf("🎯 匹配文件: %s", pattern)
+					}
+				case "web_search":
+					if query, ok := args["query"].(string); ok {
+						operation = fmt.Sprintf("🌐 网络搜索: %s", truncateString(query, 40))
+					}
+				case "web_fetch":
+					if url, ok := args["url"].(string); ok {
+						operation = fmt.Sprintf("📥 获取网页: %s", truncateString(url, 40))
+					}
+				default:
+					operation = fmt.Sprintf("🔧 %s", tc.Function.Name)
 				}
 
 				// 显示工具调用开始
-				msgChan <- tui.ToolCallMessage{
+				if !safeSend(tui.ToolCallMessage{
 					Tool: tc.Function.Name,
-					Args: toolLog,
+					Args: operation,
+				}) {
+					return
 				}
 
 				// 执行工具 - 根据模式选择执行器
@@ -1085,22 +1197,26 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 
 				// 显示执行结果
 				if result.Success {
-					msgChan <- tui.ToolResultMessage{
+					if !safeSend(tui.ToolResultMessage{
 						Success: true,
 						Result:  truncateString(result.Output, 200),
+					}) {
+						return
 					}
 				} else {
-					msgChan <- tui.ToolResultMessage{
+					if !safeSend(tui.ToolResultMessage{
 						Success: false,
 						Result:  truncateString(result.Error, 200),
+					}) {
+						return
 					}
 				}
 
 				// 累积输出
 				if result.Success {
-					allOutput.WriteString(fmt.Sprintf("%s ✅\n%s\n", toolLog, truncateString(result.Output, 100)))
+					allOutput.WriteString(fmt.Sprintf("%s ✅\n%s\n", operation, truncateString(result.Output, 100)))
 				} else {
-					allOutput.WriteString(fmt.Sprintf("%s ❌ %s\n", toolLog, truncateString(result.Error, 100)))
+					allOutput.WriteString(fmt.Sprintf("%s ❌ %s\n", operation, truncateString(result.Error, 100)))
 				}
 
 				// 添加工具结果到消息历史
@@ -1116,7 +1232,7 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 		// 如果达到最大工具调用次数，发送提示并结束
 		allOutput.WriteString(fmt.Sprintf("\n[达到最大工具调用次数限制 %d 次，思考结束]", maxToolCalls))
 		a.session.AddMessage("assistant", allOutput.String())
-		msgChan <- tui.ProcessingUpdate{Message: ""}
+		safeSend(tui.ProcessingUpdate{Message: ""})
 	}()
 
 	// 立即返回第一条消息

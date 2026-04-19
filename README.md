@@ -32,15 +32,16 @@ Finally, thank you for using this project. If you like it, feel free to give me 
 ## ✨ Features
 
 - 🗨️ **Interactive Chat Mode** - Modern terminal UI based on BubbleTea with scrolling support
+- ⏹️ **ESC Stop Streaming** - Press ESC to immediately stop AI output during streaming
 - 📝 **Multi-line Input Support** - Paste multi-line code and text directly, format preserved
 - ⚡ **Autonomous Quest Mode** - Automatically plan and execute multi-step programming tasks
 - 🔍 **Code Review** - Security vulnerabilities, performance issues, code quality detection
-- 🤖 **Sub-Agent System** - Specialized agents: Coder, Reviewer, Architect, Tester, Debugger
+- 🤖 **Sub-Agent System** - 6 specialized agents with enhanced capabilities
 - 🌐 **Remote Development** - Connect to remote servers via SSH for remote coding
 - 🎨 **Retro Terminal Splash** - Animated boot sequence with vintage CRT aesthetics
 - 🧠 **Enhanced AI Memory** - Code semantics, learning history, error pattern recognition
 - 🌐 **Advanced Context** - Code relationship graph, function tracking, project analysis
-- 💻 **Programming Assistant** - Code analysis, architecture design, refactoring, debugging
+- 💻 **Programming Assistant** - 10 core capabilities including security & performance engineering
 - 📝 **File Operations** - Read, write, edit files with precise replacements
 - 💻 **Command Execution** - Execute shell commands with cross-platform support
 - 🔒 **Safety First** - Confirmation for dangerous operations, command blacklist support

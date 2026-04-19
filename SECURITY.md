@@ -4,6 +4,7 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 1.3.x   | :white_check_mark: |
 | 1.2.x   | :white_check_mark: |
 | 1.1.x   | :white_check_mark: |
 | 1.0.x   | :white_check_mark: |
@@ -54,6 +55,8 @@ If you have suggestions on how this process could be improved, please submit a p
 
 | 版本    | 是否支持           |
 | ------- | ------------------ |
+| 1.3.x   | :white_check_mark: |
+| 1.2.x   | :white_check_mark: |
 | 1.1.x   | :white_check_mark: |
 | 1.0.x   | :white_check_mark: |
 | 0.1.x   | :x:                |
