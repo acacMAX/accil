@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/accil/accil/internal/ai"
+	"github.com/accil/accil/internal/config"
 )
 
 // Session represents a conversation session
@@ -27,16 +28,10 @@ type Manager struct {
 
 // NewManager creates a new session manager
 func NewManager() (*Manager, error) {
-	home, err := os.UserHomeDir()
+	sessionsDir, err := config.GetSessionsDir()
 	if err != nil {
 		return nil, err
 	}
-
-	sessionsDir := filepath.Join(home, ".ai-cli", "sessions")
-	if err := os.MkdirAll(sessionsDir, 0755); err != nil {
-		return nil, err
-	}
-
 	return &Manager{sessionsDir: sessionsDir}, nil
 }
 

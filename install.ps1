@@ -101,7 +101,13 @@ try {
 
     # Build
     Write-Info "Compiling..."
-    go build -o "$InstallDir\accil.exe" . 2>&1 | Out-Null
+    $accilVer = "1.3.5"
+    $verFile = Join-Path $TempDir "VERSION"
+    if (Test-Path $verFile) {
+        $accilVer = (Get-Content $verFile -TotalCount 1).Trim()
+    }
+    if ([string]::IsNullOrWhiteSpace($accilVer)) { $accilVer = "1.3.5" }
+    go build -buildvcs=false -ldflags="-X github.com/accil/accil/cmd.Version=$accilVer" -o "$InstallDir\accil.exe" . 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "Build failed"
     }

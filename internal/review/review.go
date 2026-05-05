@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
+	"path/filepath"
 	"strings"
 
 	"github.com/accil/accil/internal/ai"
@@ -202,14 +204,8 @@ Format your response as JSON:
 
 // ReviewProject performs a comprehensive project review
 func (r *Reviewer) ReviewProject(ctx context.Context, workDir string) (*Report, error) {
-	// Get project structure
-	structureResult := r.executor.Execute("run_command", `{"command": "find . -type f -name "*.go" -o -name "*.js" -o -name "*.ts" -o -name "*.py" -o -name "*.java" | head -50"}`)
-	
-	// Get file list
-	var files []string
-	if structureResult.Success {
-		files = strings.Split(strings.TrimSpace(structureResult.Output), "\n")
-	}
+	// Collect a small sample of source files in a cross-platform way.
+	files := collectProjectFiles(workDir, 50)
 
 	// Review each file
 	report := &Report{
@@ -231,6 +227,55 @@ func (r *Reviewer) ReviewProject(ctx context.Context, workDir string) (*Report, 
 	report.Summary = r.generateSummary(report)
 
 	return report, nil
+}
+
+func collectProjectFiles(workDir string, limit int) []string {
+	if limit <= 0 {
+		limit = 50
+	}
+
+	allowedExt := map[string]bool{
+		".go":   true,
+		".js":   true,
+		".ts":   true,
+		".py":   true,
+		".java": true,
+	}
+
+	var files []string
+	_ = filepath.WalkDir(workDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+
+		name := d.Name()
+		if d.IsDir() {
+			if strings.HasPrefix(name, ".") || name == "node_modules" || name == "vendor" || name == "dist" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if strings.HasPrefix(name, ".") {
+			return nil
+		}
+
+		if !allowedExt[strings.ToLower(filepath.Ext(name))] {
+			return nil
+		}
+
+		rel, err := filepath.Rel(workDir, path)
+		if err != nil {
+			return nil
+		}
+		files = append(files, rel)
+		if len(files) >= limit {
+			return filepath.SkipAll
+		}
+		return nil
+	})
+
+	return files
 }
 
 // identifyKeyFiles identifies important files to review

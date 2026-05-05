@@ -10,6 +10,8 @@
 | 1.0.x   | :white_check_mark: |
 | 0.1.x   | :x:                |
 
+**Current release:** `v1.3.5`
+
 ## Reporting a Vulnerability
 
 We take the security of ACCIL seriously. If you believe you have found a security vulnerability, please report it to us as described below.
@@ -60,6 +62,8 @@ If you have suggestions on how this process could be improved, please submit a p
 | 1.1.x   | :white_check_mark: |
 | 1.0.x   | :white_check_mark: |
 | 0.1.x   | :x:                |
+
+**当前发布版本：** `v1.3.5`
 
 ## 报告漏洞
 

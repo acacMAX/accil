@@ -91,7 +91,10 @@ if %ERRORLEVEL% neq 0 (
 if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 
 echo [INFO] Compiling...
-go build -o "%INSTALL_DIR%\accil.exe" .
+set "ACCIL_VER=1.3.5"
+if exist VERSION for /f "usebackq delims=" %%a in ("VERSION") do set "ACCIL_VER=%%a"
+set "ACCIL_VER=%ACCIL_VER: =%"
+go build -buildvcs=false -ldflags="-X github.com/accil/accil/cmd.Version=%ACCIL_VER%" -o "%INSTALL_DIR%\accil.exe" .
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] Build failed
     cd /d "%USERPROFILE%"

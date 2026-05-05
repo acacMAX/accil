@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"runtime"
@@ -27,7 +28,7 @@ import (
 )
 
 var (
-	Version      = "dev"
+	Version = "1.3.5"
 	flagWorkDir  string
 	flagModel    string
 	flagYolo     bool
@@ -189,6 +190,23 @@ func runRoot(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, "错误: API密钥未配置")
 		fmt.Fprintln(os.Stderr, "运行 'accil --setup' 配置或设置 AI_API_KEY 环境变量")
 		os.Exit(1)
+	}
+
+	// Headless mode: always run single-shot.
+	// - If prompt is provided as args, use it.
+	// - Otherwise read from stdin (useful for scripts/pipes).
+	if flagHeadless {
+		prompt := strings.Join(args, " ")
+		if strings.TrimSpace(prompt) == "" {
+			data, _ := io.ReadAll(os.Stdin)
+			prompt = strings.TrimSpace(string(data))
+		}
+		if strings.TrimSpace(prompt) == "" {
+			fmt.Fprintln(os.Stderr, "错误: headless 模式需要提供 prompt 参数或从 stdin 输入内容")
+			os.Exit(1)
+		}
+		runSingleShot(cfg, prompt)
+		return
 	}
 
 	if len(args) > 0 {
@@ -371,7 +389,11 @@ func runQuest(cmd *cobra.Command, args []string) {
 	}
 
 	progress := func(step quest.Step, total int) {
-		fmt.Printf("\n[%d/%d] %s\n", total, total, step.Description)
+		current := q.CurrentStep + 1
+		if current <= 0 {
+			current = 1
+		}
+		fmt.Printf("\n[%d/%d] %s\n", current, len(q.Steps), step.Description)
 	}
 
 	approver := func(desc string) bool {
@@ -998,7 +1020,7 @@ func (a *App) handleRemoteConnect(host, user, password, port string) (tea.Model,
 
 	// 连接成功
 	a.remoteClient = client
-	a.remoteExec = remote.NewRemoteExecutor(client)
+	a.remoteExec = remote.NewRemoteExecutor(client, a.cfg.BlockList)
 	a.model.RemoteConnected = true
 
 	// 获取服务器信息

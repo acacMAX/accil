@@ -71,7 +71,8 @@ install_from_source() {
     # 编译
     echo -e "${YELLOW}→ 编译中...${NC}"
     go mod tidy
-    go build -ldflags="-s -w" -o "$BINARY_NAME" .
+    ACCIL_VER="$( (test -f VERSION && tr -d '\r\n' < VERSION) || echo "1.3.5")"
+    go build -buildvcs=false -ldflags="-s -w -X github.com/accil/accil/cmd.Version=${ACCIL_VER}" -o "$BINARY_NAME" .
     
     # 创建安装目录
     mkdir -p "$INSTALL_DIR"

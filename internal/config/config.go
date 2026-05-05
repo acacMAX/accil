@@ -33,7 +33,7 @@ type RemoteConfig struct {
 
 var DefaultConfig = Config{
 	BaseURL:        "https://api.openai.com/v1",
-	Model:          "gpt-4o",
+	Model:          "gpt-5.5",
 	MaxTokens:      4096,
 	MaxToolCalls:   30, // 增加到30次
 	AutoApprove:    false,

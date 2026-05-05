@@ -31,14 +31,19 @@ jobs:
     - name: Build binaries
       run: |
         mkdir -p dist
+        APP_VER="${GITHUB_REF_NAME#v}"
+        if [ -z "$APP_VER" ] || [ "$APP_VER" = "${GITHUB_REF_NAME}" ]; then
+          APP_VER="$(tr -d '\r\n' < VERSION 2>/dev/null || echo '1.3.5')"
+        fi
+        LD_FLAGS="-X github.com/accil/accil/cmd.Version=${APP_VER}"
         # Windows
-        GOOS=windows GOARCH=amd64 go build -o dist/accil-windows-amd64.exe .
+        GOOS=windows GOARCH=amd64 go build -buildvcs=false -ldflags="${LD_FLAGS}" -o dist/accil-windows-amd64.exe .
         # macOS
-        GOOS=darwin GOARCH=amd64 go build -o dist/accil-darwin-amd64 .
-        GOOS=darwin GOARCH=arm64 go build -o dist/accil-darwin-arm64 .
+        GOOS=darwin GOARCH=amd64 go build -buildvcs=false -ldflags="${LD_FLAGS}" -o dist/accil-darwin-amd64 .
+        GOOS=darwin GOARCH=arm64 go build -buildvcs=false -ldflags="${LD_FLAGS}" -o dist/accil-darwin-arm64 .
         # Linux
-        GOOS=linux GOARCH=amd64 go build -o dist/accil-linux-amd64 .
-        GOOS=linux GOARCH=arm64 go build -o dist/accil-linux-arm64 .
+        GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags="${LD_FLAGS}" -o dist/accil-linux-amd64 .
+        GOOS=linux GOARCH=arm64 go build -buildvcs=false -ldflags="${LD_FLAGS}" -o dist/accil-linux-arm64 .
 
     - name: Create Release
       id: create_release

@@ -10,22 +10,35 @@ import (
 // MarkdownRenderer handles markdown rendering
 type MarkdownRenderer struct {
 	renderer *glamour.TermRenderer
+	width    int
 }
 
 // NewMarkdownRenderer creates a new markdown renderer
 func NewMarkdownRenderer() *MarkdownRenderer {
+	// Default wrap width; will be adjusted dynamically in Render().
+	const defaultWidth = 80
 	r, _ := glamour.NewTermRenderer(
 		glamour.WithAutoStyle(),
-		glamour.WithWordWrap(80),
+		glamour.WithWordWrap(defaultWidth),
 	)
-	return &MarkdownRenderer{renderer: r}
+	return &MarkdownRenderer{renderer: r, width: defaultWidth}
 }
 
 // Render renders markdown content
 func (r *MarkdownRenderer) Render(content string, width int) string {
-	// Configure width
 	if r.renderer == nil {
 		return content
+	}
+
+	// Configure width dynamically (re-create renderer when needed).
+	if width > 0 && width != r.width {
+		if nr, err := glamour.NewTermRenderer(
+			glamour.WithAutoStyle(),
+			glamour.WithWordWrap(width),
+		); err == nil {
+			r.renderer = nr
+			r.width = width
+		}
 	}
 
 	// Render markdown

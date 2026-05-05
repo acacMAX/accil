@@ -2,7 +2,9 @@
 
 # Variables
 BINARY_NAME=accil
-VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+# Embedded binary version (see root VERSION file; override with make VERSION=x.y.z)
+VERSION=$(shell (test -f VERSION && tr -d '\r\n' < VERSION) || echo "1.3.5")
+LD_FLAGS=-X github.com/accil/accil/cmd.Version=$(VERSION)
 BUILD_DIR=dist
 INSTALL_DIR=$(USERPROFILE)/.accil/bin
 
@@ -21,7 +23,7 @@ help: ## Show this help message
 
 build: ## Build the binary for current OS
 	@echo "${GREEN}Building ${BINARY_NAME}...${NC}"
-	go build -ldflags="-X main.Version=$(VERSION)" -o $(BINARY_NAME).exe .
+	go build -buildvcs=false -ldflags="$(LD_FLAGS)" -o $(BINARY_NAME).exe .
 	@echo "${GREEN}Build complete: ${BINARY_NAME}.exe${NC}"
 	@echo "${GREEN}Installing to global...${NC}"
 	@mkdir -p $(INSTALL_DIR)
@@ -51,39 +53,39 @@ vet: ## Run go vet
 
 install: ## Install the binary
 	@echo "${GREEN}Installing ${BINARY_NAME}...${NC}"
-	go install -ldflags="-X main.Version=$(VERSION)" .
+	go install -buildvcs=false -ldflags="$(LD_FLAGS)" .
 
 release-windows: ## Build for Windows
 	@echo "${GREEN}Building for Windows...${NC}"
 	mkdir -p $(BUILD_DIR)
-	GOOS=windows GOARCH=amd64 go build -ldflags="-X main.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe .
+	GOOS=windows GOARCH=amd64 go build -buildvcs=false -ldflags="$(LD_FLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe .
 	@echo "${GREEN}Windows build complete${NC}"
 
 release-mac: ## Build for macOS
 	@echo "${GREEN}Building for macOS...${NC}"
 	mkdir -p $(BUILD_DIR)
-	GOOS=darwin GOARCH=amd64 go build -ldflags="-X main.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 .
-	GOOS=darwin GOARCH=arm64 go build -ldflags="-X main.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 .
+	GOOS=darwin GOARCH=amd64 go build -buildvcs=false -ldflags="$(LD_FLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 .
+	GOOS=darwin GOARCH=arm64 go build -buildvcs=false -ldflags="$(LD_FLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 .
 	@echo "${GREEN}macOS build complete${NC}"
 
 release-linux: ## Build for Linux
 	@echo "${GREEN}Building for Linux...${NC}"
 	mkdir -p $(BUILD_DIR)
-	GOOS=linux GOARCH=amd64 go build -ldflags="-X main.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 .
-	GOOS=linux GOARCH=arm64 go build -ldflags="-X main.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 .
+	GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags="$(LD_FLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 .
+	GOOS=linux GOARCH=arm64 go build -buildvcs=false -ldflags="$(LD_FLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 .
 	@echo "${GREEN}Linux build complete${NC}"
 
 release-all: ## Build for all platforms
 	@echo "${GREEN}Building for all platforms...${NC}"
 	mkdir -p $(BUILD_DIR)
 	# Windows
-	GOOS=windows GOARCH=amd64 go build -ldflags="-X main.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe .
+	GOOS=windows GOARCH=amd64 go build -buildvcs=false -ldflags="$(LD_FLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe .
 	# macOS
-	GOOS=darwin GOARCH=amd64 go build -ldflags="-X main.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 .
-	GOOS=darwin GOARCH=arm64 go build -ldflags="-X main.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 .
+	GOOS=darwin GOARCH=amd64 go build -buildvcs=false -ldflags="$(LD_FLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 .
+	GOOS=darwin GOARCH=arm64 go build -buildvcs=false -ldflags="$(LD_FLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 .
 	# Linux
-	GOOS=linux GOARCH=amd64 go build -ldflags="-X main.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 .
-	GOOS=linux GOARCH=arm64 go build -ldflags="-X main.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 .
+	GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags="$(LD_FLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 .
+	GOOS=linux GOARCH=arm64 go build -buildvcs=false -ldflags="$(LD_FLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 .
 	@echo "${GREEN}All builds complete!${NC}"
 	@echo ""
 	@echo "Binaries are in $(BUILD_DIR)/"

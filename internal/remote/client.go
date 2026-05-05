@@ -2,6 +2,7 @@ package remote
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net"
@@ -106,12 +107,7 @@ func (c *Client) connect(config Config) error {
 		authMethods = append(authMethods, ssh.Password(config.Password))
 	}
 
-	// Host key callback
-	hostKeyCallback := ssh.InsecureIgnoreHostKey()
-	knownHostsPath := filepath.Join(os.Getenv("HOME"), ".ssh", "known_hosts")
-	if _, err := os.Stat(knownHostsPath); err == nil {
-		hostKeyCallback, _ = knownhosts.New(knownHostsPath)
-	}
+	hostKeyCallback := c.makeHostKeyCallback(config)
 
 	sshConfig := &ssh.ClientConfig{
 		User:            config.User,
@@ -130,6 +126,53 @@ func (c *Client) connect(config Config) error {
 	c.conn = conn
 	c.connected = true
 	return nil
+}
+
+func (c *Client) makeHostKeyCallback(config Config) ssh.HostKeyCallback {
+	home, _ := os.UserHomeDir()
+	knownHostsPath := filepath.Join(home, ".ssh", "known_hosts")
+
+	// Ensure known_hosts exists (empty is ok; it will then reject unknown hosts).
+	if err := os.MkdirAll(filepath.Dir(knownHostsPath), 0700); err == nil {
+		if _, err := os.Stat(knownHostsPath); os.IsNotExist(err) {
+			_ = os.WriteFile(knownHostsPath, []byte(""), 0600)
+		}
+	}
+
+	cb, err := knownhosts.New(knownHostsPath)
+	if err != nil {
+		// As a last resort, fail closed with a clear error.
+		return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+			return fmt.Errorf("无法加载 known_hosts(%s): %v", knownHostsPath, err)
+		}
+	}
+
+	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+		if err := cb(hostname, remote, key); err == nil {
+			return nil
+		}
+
+		// Provide a helpful message on unknown/mismatch host keys.
+		fp := ssh.FingerprintSHA256(key)
+
+		// knownhosts.Line wants host patterns; include both raw host and [host]:port.
+		port := config.Port
+		if port == "" {
+			port = "22"
+		}
+		host1 := config.Host
+		host2 := fmt.Sprintf("[%s]:%s", config.Host, port)
+
+		// Create a deterministic comment so users can later identify the line.
+		sum := sha256.Sum256(key.Marshal())
+		comment := fmt.Sprintf("accil-added-%x", sum[:6])
+		line := knownhosts.Line([]string{host1, host2}, key) + " " + comment
+
+		return fmt.Errorf(
+			"SSH 主机密钥校验失败/未知主机。\n主机: %s\n指纹: %s\n请确认该指纹可信后，将以下一行追加到 %s：\n%s",
+			config.Host, fp, knownHostsPath, line,
+		)
+	}
 }
 
 // IsConnected returns connection status
@@ -185,7 +228,7 @@ func (c *Client) ReadFile(path string) (string, error) {
 	stdout, stderr, err := c.Execute(cmd)
 	if err != nil {
 		if stderr != "" {
-			return "", fmt.Errorf(stderr)
+			return "", fmt.Errorf("%s", stderr)
 		}
 		return "", err
 	}

@@ -73,17 +73,17 @@ func SetupWizard() error {
 	// Model selection
 	fmt.Println()
 	fmt.Println("  Common models:")
-	fmt.Println("  OpenAI:     gpt-4o, gpt-4-turbo, gpt-3.5-turbo")
-	fmt.Println("  DeepSeek:   deepseek-chat, deepseek-coder")
-	fmt.Println("  Anthropic:  claude-3-opus, claude-3-sonnet")
-	fmt.Println("  Ollama:     llama3, codellama, mistral")
+	fmt.Println("  OpenAI:     gpt-5.5, gpt-5.4, gpt-4.1")
+	fmt.Println("  DeepSeek:   deepseek-chat, deepseek-reasoner, deepseek-coder")
+	fmt.Println("  Anthropic:  claude-sonnet-4-6, claude-opus-4-1")
+	fmt.Println("  Ollama:     qwen2.5-coder, llama3.3, mistral")
 	fmt.Println()
 	fmt.Print("  Enter model name: ")
 	model, _ := reader.ReadString('\n')
 	model = strings.TrimSpace(model)
 
 	if model == "" {
-		model = "gpt-4o"
+		model = "gpt-5.5"
 	}
 
 	// Save configuration

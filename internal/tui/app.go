@@ -720,7 +720,7 @@ func (m Model) renderSplash() string {
 
 	// 版本信息
 	versionStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(colorGray))
-	content.WriteString(versionStyle.Render("v2.0 | AI-Powered Coding Assistant"))
+	content.WriteString(versionStyle.Render("v1.3.5 | AI-Powered Coding Assistant"))
 	content.WriteString("\n\n")
 
 	// 提示

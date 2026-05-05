@@ -3,6 +3,7 @@ package remote
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/accil/accil/internal/tools"
@@ -10,12 +11,13 @@ import (
 
 // RemoteExecutor executes tools on remote server
 type RemoteExecutor struct {
-	client *Client
+	client    *Client
+	blockList []string
 }
 
 // NewRemoteExecutor creates a new remote executor
-func NewRemoteExecutor(client *Client) *RemoteExecutor {
-	return &RemoteExecutor{client: client}
+func NewRemoteExecutor(client *Client, blockList []string) *RemoteExecutor {
+	return &RemoteExecutor{client: client, blockList: blockList}
 }
 
 // Execute executes a tool on the remote server
@@ -98,6 +100,13 @@ func (e *RemoteExecutor) runCommand(args string) *tools.ToolResult {
 	}
 	if err := json.Unmarshal([]byte(args), &params); err != nil {
 		return &tools.ToolResult{Success: false, Error: err.Error()}
+	}
+
+	if e.isBlocked(params.Command) {
+		return &tools.ToolResult{
+			Success: false,
+			Error:   fmt.Sprintf("Command is blocked: %s", params.Command),
+		}
 	}
 
 	stdout, stderr, err := e.client.Execute(params.Command)
@@ -185,21 +194,48 @@ func (e *RemoteExecutor) NeedsConfirmation(toolName string, arguments string) (b
 		if err := json.Unmarshal([]byte(arguments), &params); err != nil {
 			return false, "", err
 		}
-		// Check for dangerous commands
-		dangerous := []string{"rm -rf", "> /dev", "mkfs", "dd if", "curl.*|.*sh", "wget.*|.*sh"}
-		for _, pattern := range dangerous {
-			if matched, _ := matchPattern(params.Command, pattern); matched {
+		if e.isBlocked(params.Command) {
+			return true, fmt.Sprintf("blocked command: %s", params.Command), nil
+		}
+
+		// Extra "dangerous" heuristics (regex-based).
+		dangerousPatterns := []string{
+			`(?i)\brm\s+-rf\b`,
+			`(?i)\bmkfs\b`,
+			`(?i)\bdd\s+if=`,
+			`(?i)\b:\s*\(\)\s*\{\s*:\|\:&\s*\};:\b`, // fork bomb
+			`(?i)\b(curl|wget)\b[^|]*\|\s*(sh|bash)\b`,
+			`(?i)>\s*/dev/sd[a-z]\b`,
+		}
+		for _, pattern := range dangerousPatterns {
+			if matched, _ := matchRegex(params.Command, pattern); matched {
 				return true, fmt.Sprintf("potentially dangerous command: %s", params.Command), nil
 			}
 		}
+
 		return true, fmt.Sprintf("execute: %s", params.Command), nil
 	}
 	return false, "", nil
 }
 
-func matchPattern(s, pattern string) (bool, error) {
-	// Simple pattern matching
-	return strings.Contains(s, strings.TrimSuffix(pattern, ".*")), nil
+func matchRegex(s, pattern string) (bool, error) {
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return false, err
+	}
+	return re.MatchString(s), nil
+}
+
+func (e *RemoteExecutor) isBlocked(command string) bool {
+	for _, blocked := range e.blockList {
+		if blocked == "" {
+			continue
+		}
+		if strings.Contains(command, blocked) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetClient returns the underlying SSH client

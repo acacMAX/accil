@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [1.3.5] - 2026-05-05
+
+### Security
+
+- SSH remote: enforce host key verification via `known_hosts` by default; unknown keys require an explicit `knownhosts` line (no silent `InsecureIgnoreHostKey` fallback).
+- Remote `run_command`: apply the same configurable `block_list` as local tools; add regex-based dangerous-command heuristics in the remote executor.
+
+### Added
+
+- Root `VERSION` file for reproducible builds and release tagging.
+- `--headless` with no CLI args reads the prompt from **stdin** (script/pipe friendly).
+
+### Changed
+
+- Session storage directory unified to `~/.accil/sessions`.
+- Default and documented API model identifiers refreshed (OpenAI / Anthropic / Qwen / Zhipu / Ollama examples).
+- TUI splash line shows **`v1.3.5`**.
+- Markdown rendering width follows the terminal width.
+- `ReviewProject` collects source files in pure Go (no Unix-only `find | head` on Windows).
+- Makefile, `build.bat`, `install.bat`, `install.ps1`, and `install.sh` embed version with `-X github.com/accil/accil/cmd.Version=...` and use `-buildvcs=false` where appropriate.
+
+### Fixed
+
+- Quest CLI progress printed incorrect step counters.
+- Remote file read error path used a non-constant `fmt.Errorf` format string (vet/build hygiene).
+
 ## [1.3.0] - 2026-04-12
 
 ### Added
@@ -59,35 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security response time updated to 7×24 hours
 - Security contact email updated to acac74151@gmail.com
 
-## [Unreleased]
-
-### Added
-- Real-time tool execution visibility with step-by-step display
-- Streaming message updates in interactive TUI mode
-- Tool call logging with emoji indicators (🔧 ✅ ❌)
-- Processing status messages showing current AI operation round
-- Enhanced error handling with retry mechanism (up to 3 attempts)
-- HTTP proxy support via environment variables
-- Installation scripts for Windows (install.bat, install.ps1) and Linux/macOS (install.sh)
-- GitHub Actions CI/CD workflows
-- Comprehensive documentation in English and Chinese
-- CODE_OF_CONDUCT.md and SECURITY.md
-- CONTRIBUTING.md with bilingual guidelines
-
-### Changed
-- Increased default max tool calls from 10 to 30
-- Made tool call limit configurable in config.yaml
-- Improved TUI rendering with minimum bounds checking
-- Refactored message handling for better real-time updates
-- Updated README with installation instructions
-
-### Fixed
-- Messages displaying twice in UI
-- TUI viewport panic with slice index out of range
-- Network timeout issues with extended timeout (300s)
-- Unused variable compilation errors
-- Missing import statements
-
 ## [0.1.0] - 2026-04-05
 
 ### Added
@@ -104,5 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command blacklist for safety
 - Cross-platform support (Windows, macOS, Linux)
 
-[Unreleased]: https://github.com/accil/accil/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/accil/accil/compare/v1.3.5...HEAD
+[1.3.5]: https://github.com/accil/accil/releases/tag/v1.3.5
+[1.3.0]: https://github.com/accil/accil/releases/tag/v1.3.0
 [0.1.0]: https://github.com/accil/accil/releases/tag/v0.1.0

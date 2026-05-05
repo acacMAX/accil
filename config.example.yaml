@@ -8,8 +8,8 @@ api_key: ""
 # Use this for custom endpoints like Azure, Ollama, etc.
 base_url: "https://api.openai.com/v1"
 
-# Default model
-model: "gpt-4o"
+# Default model (change if your key/region does not support it yet)
+model: "gpt-5.5"
 
 # Maximum tokens in response
 max_tokens: 4096
