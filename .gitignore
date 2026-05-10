@@ -45,6 +45,7 @@ temp/
 # Build output
 dist/
 build/
+.gocache/
 
 # Environment files (if not using config.yaml)
 .env

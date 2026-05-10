@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-05-10
+
+### Added
+
+- In-app config commands for changing provider, model, base URL, and editing config without rerunning the first-time wizard.
+
+### Changed
+
+- Refreshed documented model recommendations, including the latest DeepSeek model names and legacy-alias notes.
+- Updated release metadata, installers, and version badges to `v1.4.0`.
+- Security policy now clearly documents the currently supported release lines in both English and Chinese.
+
+### Fixed
+
+- Improved request flow for DeepSeek follow-up responses that previously failed with HTTP 400 in multi-turn use.
+- Restored TUI loading feedback while the model is thinking before output starts.
+- Fixed UI state regressions where the interface could disappear after a task completed.
+- Improved task execution stability around post-task state transitions.
+
 ## [1.3.5] - 2026-05-05
 
 ### Security
@@ -103,7 +122,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command blacklist for safety
 - Cross-platform support (Windows, macOS, Linux)
 
-[Unreleased]: https://github.com/accil/accil/compare/v1.3.5...HEAD
+[Unreleased]: https://github.com/accil/accil/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/accil/accil/releases/tag/v1.4.0
 [1.3.5]: https://github.com/accil/accil/releases/tag/v1.3.5
 [1.3.0]: https://github.com/accil/accil/releases/tag/v1.3.0
 [0.1.0]: https://github.com/accil/accil/releases/tag/v0.1.0

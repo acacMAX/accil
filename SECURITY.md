@@ -2,102 +2,108 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.3.x   | :white_check_mark: |
-| 1.2.x   | :white_check_mark: |
-| 1.1.x   | :white_check_mark: |
-| 1.0.x   | :white_check_mark: |
-| 0.1.x   | :x:                |
+We currently provide security fixes for the latest maintained release line.
 
-**Current release:** `v1.3.5`
+| Version | Supported |
+| ------- | --------- |
+| 1.4.x   | :white_check_mark: |
+| 1.3.x   | :white_check_mark: |
+| 1.2.x   | :x: |
+| 1.1.x   | :x: |
+| 1.0.x   | :x: |
+| 0.1.x   | :x: |
+
+**Current release:** `v1.4.0`
 
 ## Reporting a Vulnerability
 
-We take the security of ACCIL seriously. If you believe you have found a security vulnerability, please report it to us as described below.
+We take the security of ACCIL seriously. If you believe you have found a security vulnerability, please report it privately.
 
 **Please do NOT report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to [acac74151@gmail.com](mailto:acac74151@gmail.com).
+Send your report to [acac74151@gmail.com](mailto:acac74151@gmail.com).
 
-You should receive a response within 7×24 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
+You should receive an initial response within 24 hours. If you do not hear back, please follow up by email to make sure we received your report.
 
-Please include the following information:
+Please include the following information when possible:
 
-- Type of issue (e.g., buffer overflow, SQL injection, cross-site scripting, etc.)
-- Full paths of source file(s) related to the manifestation of the issue
-- The location of the affected source code (tag/branch/commit or direct URL)
-- Any special configuration required to reproduce the issue
-- Step-by-step instructions to reproduce the issue
-- Proof-of-concept or exploit code (if possible)
-- Impact of the issue, including how an attacker might exploit it
+- Type of issue (for example: command injection, path traversal, credential leakage)
+- Affected version, tag, commit, or branch
+- Relevant file paths or code locations
+- Required configuration or environment details
+- Clear reproduction steps
+- Proof of concept or sample payload, if available
+- Expected impact and any suggested mitigations
 
 ## Preferred Languages
 
-We prefer all communications to be in English or Chinese.
+We accept reports in English or Chinese.
 
 ## Disclosure Policy
 
-When we receive a security bug report, we will assign it to a primary handler. This person will coordinate the fix and release process, involving the following steps:
+When we receive a report, we will:
 
-1. Confirm the problem and determine the affected versions
-2. Audit code to find any potential similar problems
-3. Prepare fixes for all supported versions
-4. Release new versions and update the changelog
+1. Confirm the issue and identify affected versions.
+2. Audit adjacent code paths for similar problems.
+3. Prepare fixes for all supported versions.
+4. Release patched versions and update the changelog.
 
-## Comments on this Policy
+## Comments on This Policy
 
-If you have suggestions on how this process could be improved, please submit a pull request.
+Suggestions to improve this policy are welcome via pull request.
 
 ---
 
-# 安全政策
+# 安全策略
 
 ## 支持的版本
 
-| 版本    | 是否支持           |
-| ------- | ------------------ |
-| 1.3.x   | :white_check_mark: |
-| 1.2.x   | :white_check_mark: |
-| 1.1.x   | :white_check_mark: |
-| 1.0.x   | :white_check_mark: |
-| 0.1.x   | :x:                |
+我们目前为仍在维护的最新发布分支提供安全修复。
 
-**当前发布版本：** `v1.3.5`
+| 版本  | 是否支持 |
+| ----- | -------- |
+| 1.4.x | :white_check_mark: |
+| 1.3.x | :white_check_mark: |
+| 1.2.x | :x: |
+| 1.1.x | :x: |
+| 1.0.x | :x: |
+| 0.1.x | :x: |
 
-## 报告漏洞
+**当前发布版本：** `v1.4.0`
 
-我们认真对待 ACCIL 的安全问题。如果您发现安全漏洞，请按以下方式进行报告。
+## 漏洞报告
 
-**请不要通过公共 GitHub Issue 报告安全漏洞。**
+我们非常重视 ACCIL 的安全性。如果你发现了安全漏洞，请通过私下渠道报告。
 
-请通过电子邮件发送至 [acac74151@gmail.com](mailto:acac74151@gmail.com)。
+**请不要通过公开的 GitHub Issue 报告安全漏洞。**
 
-您应该在7×24小时内收到回复。如果由于某种原因您没有收到，请通过电子邮件跟进以确保我们收到了您的原始消息。
+请发送邮件至 [acac74151@gmail.com](mailto:acac74151@gmail.com)。
 
-请包括以下信息：
+我们通常会在 24 小时内给出首次回复。如果没有收到回复，请再次发送邮件确认我们已经收到。
 
-- 问题类型（例如：缓冲区溢出、SQL注入、跨站脚本等）
-- 与问题表现相关的源文件完整路径
-- 受影响源代码的位置（标签/分支/提交或直接URL）
-- 重现问题所需的任何特殊配置
-- 重现问题的逐步说明
-- 概念验证或利用代码（如果可能）
-- 问题的影响，包括攻击者如何利用它
+如有条件，请在报告中包含以下信息：
+
+- 漏洞类型，例如命令注入、路径穿越、凭据泄露
+- 受影响的版本、标签、提交或分支
+- 相关文件路径或代码位置
+- 复现所需的配置或环境信息
+- 清晰的复现步骤
+- PoC 或示例载荷（如果有）
+- 预期影响，以及你建议的缓解方式
 
 ## 首选语言
 
-我们倾向于使用英文或中文进行所有交流。
+我们接受英文或中文报告。
 
-## 披露政策
+## 披露流程
 
-当我们收到安全错误报告时，我们会将其分配给主要处理人。此人将协调修复和发布过程，包括以下步骤：
+收到报告后，我们会：
 
-1. 确认问题并确定受影响的版本
-2. 审核代码以查找任何潜在的类似问题
-3. 为所有支持的版本准备修复
-4. 发布新版本并更新变更日志
+1. 确认问题并识别受影响的版本。
+2. 审查相邻代码路径，查找类似问题。
+3. 为所有受支持的版本准备修复。
+4. 发布修复版本并更新变更日志。
 
-## 对此政策的意见
+## 对本策略的建议
 
-如果您对如何改进此流程有建议，请提交 Pull Request。
+如果你对本策略有改进建议，欢迎通过 Pull Request 提交。

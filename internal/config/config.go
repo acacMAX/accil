@@ -3,21 +3,22 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	APIKey         string         `mapstructure:"api_key"`
-	BaseURL        string         `mapstructure:"base_url"`
-	Model          string         `mapstructure:"model"`
-	MaxTokens      int            `mapstructure:"max_tokens"`
-	MaxToolCalls   int            `mapstructure:"max_tool_calls"` // 最大工具调用次数
-	AutoApprove    bool           `mapstructure:"auto_approve"`
-	BlockList      []string       `mapstructure:"block_list"`
-	WorkDir        string         `mapstructure:"workdir"`
-	CommandTimeout int            `mapstructure:"command_timeout"` // 命令执行超时（秒）
-	Remote         RemoteConfig   `mapstructure:"remote"`         // 远程服务器配置
+	APIKey         string       `mapstructure:"api_key"`
+	BaseURL        string       `mapstructure:"base_url"`
+	Model          string       `mapstructure:"model"`
+	MaxTokens      int          `mapstructure:"max_tokens"`
+	MaxToolCalls   int          `mapstructure:"max_tool_calls"` // 最大工具调用次数
+	AutoApprove    bool         `mapstructure:"auto_approve"`
+	BlockList      []string     `mapstructure:"block_list"`
+	WorkDir        string       `mapstructure:"workdir"`
+	CommandTimeout int          `mapstructure:"command_timeout"` // 命令执行超时（秒）
+	Remote         RemoteConfig `mapstructure:"remote"`          // 远程服务器配置
 }
 
 // RemoteConfig represents remote SSH server configuration
@@ -45,6 +46,15 @@ var DefaultConfig = Config{
 		"dd if=",
 		":(){ :|:& };:",
 	},
+}
+
+var ProviderBaseURLs = map[string]string{
+	"openai":    "https://api.openai.com/v1",
+	"deepseek":  "https://api.deepseek.com/v1",
+	"anthropic": "https://api.anthropic.com/v1",
+	"qwen":      "https://dashscope.aliyuncs.com/compatible-mode/v1",
+	"zhipu":     "https://open.bigmodel.cn/api/paas/v4",
+	"ollama":    "http://localhost:11434/v1",
 }
 
 func Init() error {
@@ -114,6 +124,8 @@ func Save(cfg *Config) error {
 	viper.Set("max_tool_calls", cfg.MaxToolCalls)
 	viper.Set("auto_approve", cfg.AutoApprove)
 	viper.Set("block_list", cfg.BlockList)
+	viper.Set("command_timeout", cfg.CommandTimeout)
+	viper.Set("remote", cfg.Remote)
 
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -126,7 +138,31 @@ func Save(cfg *Config) error {
 	}
 
 	configPath := filepath.Join(configDir, "config.yaml")
+	if _, err := os.Stat(configPath); err == nil {
+		if err := os.Remove(configPath); err != nil {
+			return err
+		}
+	}
 	return viper.WriteConfigAs(configPath)
+}
+
+func DetectProvider(baseURL string) string {
+	normalized := normalizeBaseURL(baseURL)
+	for name, candidate := range ProviderBaseURLs {
+		if normalizeBaseURL(candidate) == normalized {
+			return name
+		}
+	}
+	return "custom"
+}
+
+func ResolveProviderBaseURL(name string) (string, bool) {
+	baseURL, ok := ProviderBaseURLs[strings.ToLower(strings.TrimSpace(name))]
+	return baseURL, ok
+}
+
+func normalizeBaseURL(baseURL string) string {
+	return strings.TrimRight(strings.TrimSpace(strings.ToLower(baseURL)), "/")
 }
 
 func GetConfigDir() (string, error) {

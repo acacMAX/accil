@@ -6,23 +6,25 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
 // Message represents a chat message
 type Message struct {
-	Role       string     `json:"role"`
-	Content    string     `json:"content"`
-	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
-	ToolCallID string     `json:"tool_call_id,omitempty"`
-	Name       string     `json:"name,omitempty"`
+	Role             string     `json:"role"`
+	Content          string     `json:"content"`
+	ReasoningContent string     `json:"reasoning_content,omitempty"`
+	ToolCalls        []ToolCall `json:"tool_calls,omitempty"`
+	ToolCallID       string     `json:"tool_call_id,omitempty"`
+	Name             string     `json:"name,omitempty"`
 }
 
 // ToolCall represents a tool call from the AI
 type ToolCall struct {
-	ID       string     `json:"id"`
-	Type     string     `json:"type"`
-	Function Function   `json:"function"`
+	ID       string   `json:"id"`
+	Type     string   `json:"type"`
+	Function Function `json:"function"`
 }
 
 // Function represents a function call
@@ -33,8 +35,8 @@ type Function struct {
 
 // Tool represents a tool definition
 type Tool struct {
-	Type     string       `json:"type"`
-	Function FunctionDef  `json:"function"`
+	Type     string      `json:"type"`
+	Function FunctionDef `json:"function"`
 }
 
 // FunctionDef represents a function definition
@@ -66,9 +68,9 @@ type ChatResponse struct {
 
 // Choice represents a response choice
 type Choice struct {
-	Index        int      `json:"index"`
-	Message      Message  `json:"message"`
-	FinishReason string   `json:"finish_reason"`
+	Index        int     `json:"index"`
+	Message      Message `json:"message"`
+	FinishReason string  `json:"finish_reason"`
 }
 
 // Usage represents token usage
@@ -80,18 +82,18 @@ type Usage struct {
 
 // StreamResponse represents a streaming response
 type StreamResponse struct {
-	ID      string        `json:"id"`
-	Object  string        `json:"object"`
-	Created int64         `json:"created"`
-	Model   string        `json:"model"`
+	ID      string         `json:"id"`
+	Object  string         `json:"object"`
+	Created int64          `json:"created"`
+	Model   string         `json:"model"`
 	Choices []StreamChoice `json:"choices"`
 }
 
 // StreamChoice represents a streaming choice
 type StreamChoice struct {
-	Index        int           `json:"index"`
-	Delta        StreamDelta   `json:"delta"`
-	FinishReason string        `json:"finish_reason"`
+	Index        int         `json:"index"`
+	Delta        StreamDelta `json:"delta"`
+	FinishReason string      `json:"finish_reason"`
 }
 
 // StreamDelta represents streaming delta content
@@ -103,14 +105,14 @@ type StreamDelta struct {
 
 // Client represents an AI client
 type Client struct {
-	apiKey        string
-	baseURL       string
-	model         string
-	client        *http.Client
-	TotalTokens   int // 总用量统计
-	PromptTokens  int // 输入token统计
-	OutputTokens  int // 输出token统计
-	RequestCount  int // 请求次数
+	apiKey       string
+	baseURL      string
+	model        string
+	client       *http.Client
+	TotalTokens  int // 总用量统计
+	PromptTokens int // 输入token统计
+	OutputTokens int // 输出token统计
+	RequestCount int // 请求次数
 }
 
 // NewClient creates a new AI client
@@ -122,7 +124,7 @@ func NewClient(apiKey, baseURL, model string) *Client {
 
 	return &Client{
 		apiKey:  apiKey,
-		baseURL: baseURL,
+		baseURL: strings.TrimRight(baseURL, "/"),
 		model:   model,
 		client: &http.Client{
 			Timeout:   300 * time.Second, // 增加到5分钟
@@ -133,6 +135,52 @@ func NewClient(apiKey, baseURL, model string) *Client {
 		OutputTokens: 0,
 		RequestCount: 0,
 	}
+}
+
+func (c *Client) SetModel(model string) {
+	c.model = model
+}
+
+func (c *Client) SetBaseURL(baseURL string) {
+	c.baseURL = strings.TrimRight(baseURL, "/")
+}
+
+func (c *Client) Model() string {
+	return c.model
+}
+
+func (c *Client) BaseURL() string {
+	return c.baseURL
+}
+
+func (c *Client) SupportsTools() bool {
+	return ModelSupportsTools(c.model)
+}
+
+func ModelSupportsTools(model string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(model))
+	if normalized == "" {
+		return true
+	}
+
+	unsupportedMarkers := []string{
+		"deepseek-reasoner",
+		"deepseek-r1",
+	}
+	for _, marker := range unsupportedMarkers {
+		if strings.Contains(normalized, marker) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func ToolsForModel(model string) []Tool {
+	if !ModelSupportsTools(model) {
+		return nil
+	}
+	return GetDefaultTools()
 }
 
 // Chat sends a chat completion request with retry

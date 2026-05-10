@@ -73,8 +73,9 @@ func SetupWizard() error {
 	// Model selection
 	fmt.Println()
 	fmt.Println("  Common models:")
-	fmt.Println("  OpenAI:     gpt-5.5, gpt-5.4, gpt-4.1")
-	fmt.Println("  DeepSeek:   deepseek-chat, deepseek-reasoner, deepseek-coder")
+	fmt.Println("  OpenAI:     gpt-5.5, gpt-5.4-mini, gpt-5.4-nano")
+	fmt.Println("  DeepSeek:   deepseek-v4-pro, deepseek-v4-flash")
+	fmt.Println("              Legacy aliases: deepseek-chat, deepseek-reasoner (deprecated 2026-07-24)")
 	fmt.Println("  Anthropic:  claude-sonnet-4-6, claude-opus-4-1")
 	fmt.Println("  Ollama:     qwen2.5-coder, llama3.3, mistral")
 	fmt.Println()

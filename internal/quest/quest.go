@@ -35,14 +35,14 @@ type Step struct {
 
 // Quest represents an autonomous programming task
 type Quest struct {
-	ID          string     `json:"id"`
-	Goal        string     `json:"goal"`
-	Status      Status     `json:"status"`
-	Steps       []Step     `json:"steps"`
-	CurrentStep int        `json:"current_step"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
-	Context     string     `json:"context,omitempty"`
+	ID          string    `json:"id"`
+	Goal        string    `json:"goal"`
+	Status      Status    `json:"status"`
+	Steps       []Step    `json:"steps"`
+	CurrentStep int       `json:"current_step"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Context     string    `json:"context,omitempty"`
 }
 
 // Planner plans and executes autonomous tasks
@@ -238,8 +238,8 @@ Current Step: %s
 Previous steps completed:
 %s
 
-Execute this step and report the result. If you need to use tools, specify them.`, 
-		quest.Goal, 
+Execute this step and report the result. If you need to use tools, specify them.`,
+		quest.Goal,
 		step.Description,
 		p.getCompletedStepsSummary(quest))
 
@@ -248,7 +248,7 @@ Execute this step and report the result. If you need to use tools, specify them.
 		{Role: "user", Content: prompt},
 	}
 
-	resp, err := p.client.Chat(messages, ai.GetDefaultTools())
+	resp, err := p.client.Chat(messages, ai.ToolsForModel(p.client.Model()))
 	if err != nil {
 		return "", err
 	}
@@ -267,7 +267,7 @@ Execute this step and report the result. If you need to use tools, specify them.
 			})
 		}
 
-		resp, err = p.client.Chat(messages, ai.GetDefaultTools())
+		resp, err = p.client.Chat(messages, ai.ToolsForModel(p.client.Model()))
 		if err != nil {
 			return "", err
 		}
@@ -325,7 +325,7 @@ Current plan:
 %s
 
 Should we adjust the remaining steps? If yes, provide updated steps in JSON array format.
-If the plan is still valid, respond with "PLAN_OK".`, 
+If the plan is still valid, respond with "PLAN_OK".`,
 		quest.Goal,
 		p.getCompletedStepsSummary(quest),
 		p.getRemainingSteps(quest))

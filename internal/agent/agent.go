@@ -326,7 +326,7 @@ func (m *Manager) AssignTask(ctx context.Context, agentID string, task Task, aut
 
 	// Execute with tool support - 无限循环直到完成
 	for i := 0; ; i++ {
-		resp, err := m.client.Chat(messages, ai.GetDefaultTools())
+		resp, err := m.client.Chat(messages, ai.ToolsForModel(m.client.Model()))
 		if err != nil {
 			task.Status = "failed"
 			task.Error = err.Error()

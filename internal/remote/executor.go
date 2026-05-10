@@ -1,7 +1,6 @@
 package remote
 
 import (
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -49,7 +48,7 @@ func (e *RemoteExecutor) readFile(args string) *tools.ToolResult {
 	var params struct {
 		Path string `json:"path"`
 	}
-	if err := json.Unmarshal([]byte(args), &params); err != nil {
+	if err := tools.ParseArgumentsInto(args, &params); err != nil {
 		return &tools.ToolResult{Success: false, Error: err.Error()}
 	}
 
@@ -66,7 +65,7 @@ func (e *RemoteExecutor) writeFile(args string) *tools.ToolResult {
 		Path    string `json:"path"`
 		Content string `json:"content"`
 	}
-	if err := json.Unmarshal([]byte(args), &params); err != nil {
+	if err := tools.ParseArgumentsInto(args, &params); err != nil {
 		return &tools.ToolResult{Success: false, Error: err.Error()}
 	}
 
@@ -83,7 +82,7 @@ func (e *RemoteExecutor) editFile(args string) *tools.ToolResult {
 		OldString string `json:"old_string"`
 		NewString string `json:"new_string"`
 	}
-	if err := json.Unmarshal([]byte(args), &params); err != nil {
+	if err := tools.ParseArgumentsInto(args, &params); err != nil {
 		return &tools.ToolResult{Success: false, Error: err.Error()}
 	}
 
@@ -98,7 +97,7 @@ func (e *RemoteExecutor) runCommand(args string) *tools.ToolResult {
 	var params struct {
 		Command string `json:"command"`
 	}
-	if err := json.Unmarshal([]byte(args), &params); err != nil {
+	if err := tools.ParseArgumentsInto(args, &params); err != nil {
 		return &tools.ToolResult{Success: false, Error: err.Error()}
 	}
 
@@ -125,7 +124,7 @@ func (e *RemoteExecutor) listDir(args string) *tools.ToolResult {
 	var params struct {
 		Path string `json:"path"`
 	}
-	if err := json.Unmarshal([]byte(args), &params); err != nil {
+	if err := tools.ParseArgumentsInto(args, &params); err != nil {
 		return &tools.ToolResult{Success: false, Error: err.Error()}
 	}
 
@@ -146,7 +145,7 @@ func (e *RemoteExecutor) searchCode(args string) *tools.ToolResult {
 		Pattern string `json:"pattern"`
 		Path    string `json:"path"`
 	}
-	if err := json.Unmarshal([]byte(args), &params); err != nil {
+	if err := tools.ParseArgumentsInto(args, &params); err != nil {
 		return &tools.ToolResult{Success: false, Error: err.Error()}
 	}
 
@@ -163,7 +162,7 @@ func (e *RemoteExecutor) glob(args string) *tools.ToolResult {
 		Pattern string `json:"pattern"`
 		Path    string `json:"path"`
 	}
-	if err := json.Unmarshal([]byte(args), &params); err != nil {
+	if err := tools.ParseArgumentsInto(args, &params); err != nil {
 		return &tools.ToolResult{Success: false, Error: err.Error()}
 	}
 
@@ -183,7 +182,7 @@ func (e *RemoteExecutor) NeedsConfirmation(toolName string, arguments string) (b
 		var params struct {
 			Path string `json:"path"`
 		}
-		if err := json.Unmarshal([]byte(arguments), &params); err != nil {
+		if err := tools.ParseArgumentsInto(arguments, &params); err != nil {
 			return false, "", err
 		}
 		return true, fmt.Sprintf("%s %s", toolName, params.Path), nil
@@ -191,7 +190,7 @@ func (e *RemoteExecutor) NeedsConfirmation(toolName string, arguments string) (b
 		var params struct {
 			Command string `json:"command"`
 		}
-		if err := json.Unmarshal([]byte(arguments), &params); err != nil {
+		if err := tools.ParseArgumentsInto(arguments, &params); err != nil {
 			return false, "", err
 		}
 		if e.isBlocked(params.Command) {

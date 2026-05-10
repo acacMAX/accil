@@ -88,18 +88,18 @@ git push -u origin main
 
 ### 方法1：通过Web界面
 1. 访问 https://github.com/YOUR_USERNAME/accil/releases/new
-2. Tag version: `v1.3.5`
-3. Release title: `ACCIL v1.3.5`
+2. Tag version: `v1.4.0`
+3. Release title: `ACCIL v1.4.0`
 4. 描述：复制 CHANGELOG.md 的内容
 5. 点击 "Publish release"
 
 ### 方法2：通过命令行
 ```bash
 # 创建标签
-git tag v1.3.5
+git tag v1.4.0
 
 # 推送标签
-git push origin v1.3.5
+git push origin v1.4.0
 ```
 
 GitHub Actions会自动：

@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	Version = "1.3.5"
+	Version      = "1.4.0"
 	flagWorkDir  string
 	flagModel    string
 	flagYolo     bool
@@ -232,10 +232,12 @@ func runSingleShot(cfg *config.Config, prompt string) {
 		maxCalls = 30
 	}
 
-	for i := 0; ; i++ {
+	toolsForModel := ai.ToolsForModel(cfg.Model)
+
+	for i := 0; i < maxCalls; i++ {
 		fmt.Printf("\n[思考中... 第%d轮]\n", i+1)
 
-		resp, err := client.Chat(messages, ai.GetDefaultTools())
+		resp, err := client.Chat(messages, toolsForModel)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "错误: %v\n", err)
 			os.Exit(1)
@@ -876,6 +878,7 @@ func NewApp(cfg *config.Config, client *ai.Client, executor *tools.Executor,
 
 	model := tui.NewModel()
 	model.SetModelName(cfg.Model)
+	model.SetProvider(config.DetectProvider(cfg.BaseURL))
 
 	return App{
 		model:      model,
@@ -906,6 +909,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if a.model.StopRequested {
 				close(a.msgChan)
 				a.msgChan = nil
+				a.model.Input.Focus()
 				a.model.StopRequested = false
 				return a, cmd
 			}
@@ -951,6 +955,12 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tui.RemoteDisconnectMessage:
 		// 断开远程连接
 		return a.handleRemoteDisconnect()
+
+	case tui.ConfigUpdateMessage:
+		return a.handleConfigUpdate(msg)
+
+	case tui.ConfigShowMessage:
+		return a.handleConfigShow()
 
 	case tickMsg:
 		// 定时刷新，检查是否有新消息
@@ -1088,8 +1098,14 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 			close(msgChan)
 		}()
 
+		systemPrompt := a.getSystemPrompt()
+		toolsForModel := ai.ToolsForModel(a.client.Model())
+		if len(toolsForModel) == 0 {
+			systemPrompt += "\n\nNOTE: Tool calling is disabled for the current model. Do not claim to inspect files, run commands, or modify the workspace."
+		}
+
 		messages := []ai.Message{
-			{Role: "system", Content: a.getSystemPrompt()},
+			{Role: "system", Content: systemPrompt},
 		}
 		messages = append(messages, a.session.Messages...)
 
@@ -1117,7 +1133,7 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 				return // channel已关闭
 			}
 
-			resp, err := a.client.Chat(messages, ai.GetDefaultTools())
+			resp, err := a.client.Chat(messages, toolsForModel)
 			if err != nil {
 				safeSend(tui.ErrorMessage{Error: err})
 				return
@@ -1265,4 +1281,55 @@ func (a *App) processUserMessageWithTools(content string) tea.Cmd {
 		}
 		return msg
 	}
+}
+
+func (a *App) handleConfigUpdate(msg tui.ConfigUpdateMessage) (tea.Model, tea.Cmd) {
+	value := strings.TrimSpace(msg.Value)
+	if value == "" {
+		a.model.AddMessage("error", "Empty configuration value.")
+		return a, nil
+	}
+
+	switch msg.Kind {
+	case "model":
+		a.cfg.Model = value
+	case "provider":
+		baseURL, ok := config.ResolveProviderBaseURL(value)
+		if !ok {
+			a.model.AddMessage("error", fmt.Sprintf("Unknown provider: %s", value))
+			return a, nil
+		}
+		a.cfg.BaseURL = baseURL
+	case "base_url":
+		a.cfg.BaseURL = value
+	default:
+		a.model.AddMessage("error", fmt.Sprintf("Unknown config field: %s", msg.Kind))
+		return a, nil
+	}
+
+	if err := config.Save(a.cfg); err != nil {
+		a.model.AddMessage("error", fmt.Sprintf("Failed to save config: %v", err))
+		return a, nil
+	}
+
+	a.client = ai.NewClient(a.cfg.APIKey, a.cfg.BaseURL, a.cfg.Model)
+	a.executor = newExecutor(a.cfg)
+	a.agentMgr = agent.NewManager(a.client, a.executor)
+	a.planner = quest.NewPlanner(a.client, a.executor)
+	a.reviewer = review.NewReviewer(a.client, a.executor)
+	a.model.SetModelName(a.cfg.Model)
+	a.model.SetProvider(config.DetectProvider(a.cfg.BaseURL))
+
+	if !a.client.SupportsTools() {
+		a.model.AddMessage("system", fmt.Sprintf("Config saved. Provider=%s Model=%s. Tool calling is disabled for this model.", a.model.Provider, a.cfg.Model))
+		return a, nil
+	}
+
+	a.model.AddMessage("success", fmt.Sprintf("Config saved. Provider=%s Model=%s", a.model.Provider, a.cfg.Model))
+	return a, nil
+}
+
+func (a *App) handleConfigShow() (tea.Model, tea.Cmd) {
+	a.model.AddMessage("system", fmt.Sprintf("Provider: %s\nBase URL: %s\nModel: %s\nTools enabled: %t", config.DetectProvider(a.cfg.BaseURL), a.cfg.BaseURL, a.cfg.Model, a.client.SupportsTools()))
+	return a, nil
 }

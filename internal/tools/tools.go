@@ -51,8 +51,8 @@ func (e *Executor) SetCommandTimeout(timeout time.Duration) {
 
 // Execute executes a tool call
 func (e *Executor) Execute(name string, arguments string) *ToolResult {
-	params := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(arguments), &params); err != nil {
+	params, err := ParseArguments(arguments)
+	if err != nil {
 		return &ToolResult{
 			Success: false,
 			Error:   fmt.Sprintf("Failed to parse arguments: %v", err),
@@ -86,6 +86,80 @@ func (e *Executor) Execute(name string, arguments string) *ToolResult {
 	}
 }
 
+func ParseArguments(arguments string) (map[string]interface{}, error) {
+	params := make(map[string]interface{})
+
+	candidates := []string{arguments}
+	if repaired := repairJSON(arguments); repaired != arguments {
+		candidates = append(candidates, repaired)
+	}
+
+	var lastErr error
+	for _, candidate := range candidates {
+		if strings.TrimSpace(candidate) == "" {
+			lastErr = fmt.Errorf("empty arguments")
+			continue
+		}
+		if err := json.Unmarshal([]byte(candidate), &params); err == nil {
+			return params, nil
+		} else {
+			lastErr = err
+		}
+	}
+
+	return nil, lastErr
+}
+
+func ParseArgumentsInto(arguments string, target interface{}) error {
+	candidates := []string{arguments}
+	if repaired := repairJSON(arguments); repaired != arguments {
+		candidates = append(candidates, repaired)
+	}
+
+	var lastErr error
+	for _, candidate := range candidates {
+		if strings.TrimSpace(candidate) == "" {
+			lastErr = fmt.Errorf("empty arguments")
+			continue
+		}
+		if err := json.Unmarshal([]byte(candidate), target); err == nil {
+			return nil
+		} else {
+			lastErr = err
+		}
+	}
+
+	return lastErr
+}
+
+func repairJSON(input string) string {
+	s := strings.TrimSpace(input)
+	if s == "" {
+		return s
+	}
+
+	if idx := strings.IndexByte(s, '{'); idx >= 0 {
+		s = s[idx:]
+	}
+	if idx := strings.LastIndexByte(s, '}'); idx >= 0 {
+		s = s[:idx+1]
+	}
+
+	openBraces := strings.Count(s, "{")
+	closeBraces := strings.Count(s, "}")
+	if closeBraces < openBraces {
+		s += strings.Repeat("}", openBraces-closeBraces)
+	}
+
+	openBrackets := strings.Count(s, "[")
+	closeBrackets := strings.Count(s, "]")
+	if closeBrackets < openBrackets {
+		s += strings.Repeat("]", openBrackets-closeBrackets)
+	}
+
+	return s
+}
+
 // NeedsConfirmation returns true if the tool needs user confirmation
 func (e *Executor) NeedsConfirmation(name string, arguments string) (bool, string, error) {
 	switch name {
@@ -93,7 +167,7 @@ func (e *Executor) NeedsConfirmation(name string, arguments string) (bool, strin
 		return false, "", nil
 	case "write_file", "edit_file", "run_command":
 		params := make(map[string]interface{})
-		if err := json.Unmarshal([]byte(arguments), &params); err != nil {
+		if err := ParseArgumentsInto(arguments, &params); err != nil {
 			return true, "", err
 		}
 

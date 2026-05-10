@@ -348,6 +348,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ShowSplash = false
 		}
 
+		if m.IsStreaming || m.ProcessingMsg != "" {
+			m.updateViewport()
+		}
+
 		return m, m.tick()
 
 	case tea.KeyMsg:
@@ -527,15 +531,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.updateViewport()
 
 	case ProcessingUpdate:
-		m.IsStreaming = true
 		m.ProcessingMsg = msg.Message
-		m.Messages = append(m.Messages, DisplayMessage{
-			Role:      "system",
-			Content:   m.getSpinner() + " " + msg.Message,
-			Timestamp: time.Now(),
-		})
+		m.IsStreaming = msg.Message != ""
 		m.updateViewport()
-		m.viewport.GotoBottom()
+		if m.IsStreaming {
+			m.viewport.GotoBottom()
+		}
 
 	case QuestStatusMessage:
 		m.QuestStatus = msg.Status
@@ -568,6 +569,11 @@ func (m *Model) updateViewport() {
 	for _, msg := range m.Messages {
 		rendered := m.renderMessage(msg)
 		content.WriteString(rendered)
+		content.WriteString("\n")
+	}
+
+	if m.ProcessingMsg != "" {
+		content.WriteString(systemMsgStyle.Render(m.getSpinner() + " " + m.ProcessingMsg))
 		content.WriteString("\n")
 	}
 
@@ -859,7 +865,10 @@ func (m Model) renderHelp() string {
   /review        审查模式
   /agent         代理模式
   /remote        远程开发模式
+  /provider <p>  切换服务商
   /model <name>  切换模型
+  /baseurl <u>   切换 API URL
+  /config        显示当前配置
   /context       显示上下文
 
   快捷键
@@ -967,7 +976,7 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 		m.Mode = ModeQuest
 		m.Messages = append(m.Messages, DisplayMessage{
 			Role:      "system",
-			Content:   "进入任务模式。描述你的目标，AI将自主规划和执行。",
+			Content:   "Entered quest mode. Describe the goal and ACCIL will plan and execute it.",
 			Timestamp: time.Now(),
 		})
 		m.updateViewport()
@@ -976,7 +985,7 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 		m.Mode = ModeReview
 		m.Messages = append(m.Messages, DisplayMessage{
 			Role:      "system",
-			Content:   "进入审查模式。发送代码路径进行审查。",
+			Content:   "Entered review mode. Send file paths or ask for a review.",
 			Timestamp: time.Now(),
 		})
 		m.updateViewport()
@@ -985,7 +994,7 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 		m.Mode = ModeAgent
 		m.Messages = append(m.Messages, DisplayMessage{
 			Role:      "system",
-			Content:   "进入代理模式。可用: coder, reviewer, architect, tester, debugger, researcher",
+			Content:   "Entered agent mode. Available agents: coder, reviewer, architect, tester, debugger, researcher.",
 			Timestamp: time.Now(),
 		})
 		m.updateViewport()
@@ -994,7 +1003,7 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 		m.Mode = ModeChat
 		m.Messages = append(m.Messages, DisplayMessage{
 			Role:      "system",
-			Content:   "切换到对话模式。",
+			Content:   "Switched to chat mode.",
 			Timestamp: time.Now(),
 		})
 		m.updateViewport()
@@ -1004,24 +1013,20 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 		if len(cmd) > 1 {
 			switch cmd[1] {
 			case "connect":
-				// 显示连接表单
 				m.ShowRemoteForm = true
 				m.RemoteForm = RemoteForm{Field: 0, Port: "22"}
 				m.Input.SetValue("")
 			case "disconnect":
-				// 发送断开连接请求
 				m.Input.SetValue("")
 				return m, func() tea.Msg {
 					return RemoteDisconnectMessage{}
 				}
 			default:
-				// 设置主机名并显示表单
 				m.ShowRemoteForm = true
 				m.RemoteForm = RemoteForm{Host: cmd[1], Field: 1, Port: "22"}
 				m.Input.SetValue("")
 			}
 		} else {
-			// 直接显示连接表单
 			m.ShowRemoteForm = true
 			m.RemoteForm = RemoteForm{Field: 0, Port: "22"}
 			m.Input.SetValue("")
@@ -1029,19 +1034,57 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 
 	case "/model":
 		if len(cmd) > 1 {
-			m.ModelName = cmd[1]
-			m.Messages = append(m.Messages, DisplayMessage{
-				Role:      "success",
-				Content:   fmt.Sprintf("模型已切换为: %s", cmd[1]),
-				Timestamp: time.Now(),
-			})
-			m.updateViewport()
+			newModel := strings.Join(cmd[1:], " ")
+			m.Input.SetValue("")
+			return m, func() tea.Msg {
+				return ConfigUpdateMessage{Kind: "model", Value: newModel}
+			}
+		}
+		m.Messages = append(m.Messages, DisplayMessage{
+			Role:      "system",
+			Content:   "Usage: /model <name>",
+			Timestamp: time.Now(),
+		})
+		m.updateViewport()
+
+	case "/provider":
+		if len(cmd) > 1 {
+			m.Input.SetValue("")
+			return m, func() tea.Msg {
+				return ConfigUpdateMessage{Kind: "provider", Value: cmd[1]}
+			}
+		}
+		m.Messages = append(m.Messages, DisplayMessage{
+			Role:      "system",
+			Content:   "Providers: openai, deepseek, anthropic, qwen, zhipu, ollama",
+			Timestamp: time.Now(),
+		})
+		m.updateViewport()
+
+	case "/baseurl":
+		if len(cmd) > 1 {
+			newBaseURL := strings.Join(cmd[1:], " ")
+			m.Input.SetValue("")
+			return m, func() tea.Msg {
+				return ConfigUpdateMessage{Kind: "base_url", Value: newBaseURL}
+			}
+		}
+		m.Messages = append(m.Messages, DisplayMessage{
+			Role:      "system",
+			Content:   "Usage: /baseurl <url>",
+			Timestamp: time.Now(),
+		})
+		m.updateViewport()
+
+	case "/config":
+		return m, func() tea.Msg {
+			return ConfigShowMessage{}
 		}
 
 	case "/context":
 		m.Messages = append(m.Messages, DisplayMessage{
 			Role:      "system",
-			Content:   fmt.Sprintf("工作目录: %s\n模型: %s\n模式: %s", ".", m.ModelName, m.Mode),
+			Content:   fmt.Sprintf("Workdir: %s\nModel: %s\nProvider: %s\nMode: %s", ".", m.ModelName, m.Provider, m.Mode),
 			Timestamp: time.Now(),
 		})
 		m.updateViewport()
@@ -1049,7 +1092,7 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 	default:
 		m.Messages = append(m.Messages, DisplayMessage{
 			Role:      "error",
-			Content:   fmt.Sprintf("未知命令: %s", cmd[0]),
+			Content:   fmt.Sprintf("Unknown command: %s", cmd[0]),
 			Timestamp: time.Now(),
 		})
 		m.updateViewport()
@@ -1057,7 +1100,6 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 
 	return m, nil
 }
-
 func (m Model) sendMessage(content string) tea.Cmd {
 	return func() tea.Msg {
 		return UserMessage{Content: content}
@@ -1099,6 +1141,13 @@ type ModeChangeMessage struct {
 type ProcessingUpdate struct {
 	Message string
 }
+
+type ConfigUpdateMessage struct {
+	Kind  string
+	Value string
+}
+
+type ConfigShowMessage struct{}
 
 // RemoteConnectMessage 远程连接请求
 type RemoteConnectMessage struct {

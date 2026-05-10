@@ -14,7 +14,7 @@
 **AI驱动的自主编程助手**
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
-[![Version](https://img.shields.io/badge/release-1.3.5-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/release-1.4.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20|%20macOS%20|%20Linux-lightgrey)](https://github.com/acacMAX/accil)
 [![Website](https://img.shields.io/badge/Website-cli.acz.qzz.io-blue)](https://cli.acz.qzz.io/)
@@ -226,8 +226,8 @@ export AI_BASE_URL="https://api.openai.com/v1"
 
 | 提供商 | Base URL | 推荐模型 |
 |--------|----------|----------|
-| OpenAI | `https://api.openai.com/v1` | gpt-5.5, gpt-5.4, gpt-4.1 |
-| DeepSeek | `https://api.deepseek.com/v1` | deepseek-chat, deepseek-reasoner, deepseek-coder |
+| OpenAI | `https://api.openai.com/v1` | gpt-5.5, gpt-5.4-mini, gpt-5.4-nano |
+| DeepSeek | `https://api.deepseek.com/v1` | deepseek-v4-pro, deepseek-v4-flash |
 | Anthropic | `https://api.anthropic.com/v1` | claude-sonnet-4-6, claude-opus-4-1 |
 | 通义千问 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | qwen3-max, qwen-plus, qwen-turbo |
 | 智谱 AI | `https://open.bigmodel.cn/api/paas/v4` | glm-4.6, glm-4-plus |
