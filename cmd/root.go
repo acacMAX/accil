@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	Version      = "1.4.0"
+	Version      = "1.4.6"
 	flagWorkDir  string
 	flagModel    string
 	flagYolo     bool
@@ -1330,6 +1330,6 @@ func (a *App) handleConfigUpdate(msg tui.ConfigUpdateMessage) (tea.Model, tea.Cm
 }
 
 func (a *App) handleConfigShow() (tea.Model, tea.Cmd) {
-	a.model.AddMessage("system", fmt.Sprintf("Provider: %s\nBase URL: %s\nModel: %s\nTools enabled: %t", config.DetectProvider(a.cfg.BaseURL), a.cfg.BaseURL, a.cfg.Model, a.client.SupportsTools()))
+	a.model.AddMessage("system", fmt.Sprintf("Provider: %s\nBase URL: %s\nModel: %s\nTools enabled: %t\n\nCommands:\n/config show\n/config provider <name>\n/config model <name>\n/config baseurl <url>", config.DetectProvider(a.cfg.BaseURL), a.cfg.BaseURL, a.cfg.Model, a.client.SupportsTools()))
 	return a, nil
 }

@@ -7,17 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.6] - 2026-05-16
+
+### Added
+
+- Unified interactive runtime configuration under `/config`.
+- `/config show`, `/config provider`, `/config model`, and `/config baseurl` are now documented as the primary config workflow.
+
+### Changed
+
+- Updated app version, release metadata, and installer defaults to `v1.4.6`.
+- User documentation now points to the official website instead of GitHub-facing install and community links.
+- Chinese README was refreshed to match the current command set and release messaging.
+
+### Deprecated
+
+- `/provider`, `/model`, and `/baseurl` remain available as compatibility aliases, but `/config ...` is now the main entry point.
+
 ## [1.4.0] - 2026-05-10
 
 ### Added
 
 - In-app config commands for changing provider, model, base URL, and editing config without rerunning the first-time wizard.
+- Interactive `/config` display for checking the active provider, base URL, model, and whether tool calling is enabled.
 
 ### Changed
 
 - Refreshed documented model recommendations, including the latest DeepSeek model names and legacy-alias notes.
 - Updated release metadata, installers, and version badges to `v1.4.0`.
 - Security policy now clearly documents the currently supported release lines in both English and Chinese.
+- README and quick-start docs now explain how to change provider and model after the initial setup.
 
 ### Fixed
 
@@ -122,8 +141,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command blacklist for safety
 - Cross-platform support (Windows, macOS, Linux)
 
-[Unreleased]: https://github.com/accil/accil/compare/v1.4.0...HEAD
-[1.4.0]: https://github.com/accil/accil/releases/tag/v1.4.0
-[1.3.5]: https://github.com/accil/accil/releases/tag/v1.3.5
-[1.3.0]: https://github.com/accil/accil/releases/tag/v1.3.0
-[0.1.0]: https://github.com/accil/accil/releases/tag/v0.1.0
+[1.4.6]: CHANGELOG.md
+[1.4.0]: CHANGELOG.md
+[1.3.5]: CHANGELOG.md
+[1.3.0]: CHANGELOG.md
+[0.1.0]: CHANGELOG.md

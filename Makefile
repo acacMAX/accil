@@ -3,7 +3,7 @@
 # Variables
 BINARY_NAME=accil
 # Embedded binary version (see root VERSION file; override with make VERSION=x.y.z)
-VERSION=$(shell (test -f VERSION && tr -d '\r\n' < VERSION) || echo "1.3.5")
+VERSION=$(shell (test -f VERSION && tr -d '\r\n' < VERSION) || echo "1.4.6")
 LD_FLAGS=-X github.com/accil/accil/cmd.Version=$(VERSION)
 BUILD_DIR=dist
 INSTALL_DIR=$(USERPROFILE)/.accil/bin

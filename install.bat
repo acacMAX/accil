@@ -1,11 +1,18 @@
 @echo off
 chcp 65001 >nul
-setlocal enabledelayedexpansion
+setlocal EnableExtensions EnableDelayedExpansion
 
-:: ACCIL Installation Script for Windows
-
-set REPO_URL=https://github.com/acacMAX/accil.git
-set INSTALL_DIR=%USERPROFILE%\.accil\bin
+set "SCRIPT_DIR=%~dp0"
+set "INSTALL_DIR=%USERPROFILE%\.accil\bin"
+set "FALLBACK_INSTALL_DIR=%LOCALAPPDATA%\accil\bin"
+set "LAST_RESORT_INSTALL_DIR=%TEMP%\accil\bin"
+set "CACHE_DIR=%TEMP%\accil-cache"
+set "GOCACHE=%CACHE_DIR%\go-build"
+set "GOMODCACHE=%CACHE_DIR%\gomod"
+set "REPO_URL=https://github.com/acacMAX/accil.git"
+set "TEMP_DIR=%TEMP%\accil-install-%RANDOM%%RANDOM%"
+set "SOURCE_DIR="
+set "BUILD_OUTPUT=%TEMP%\accil-build-%RANDOM%%RANDOM%.exe"
 
 echo.
 echo ========================================
@@ -13,159 +20,154 @@ echo    ACCIL Installation Wizard
 echo ========================================
 echo.
 
-:: Check if Go is installed
 where go >nul 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Go is not installed!
-    echo Please download and install Go from: https://go.dev/dl/
+if errorlevel 1 (
+    echo [ERROR] Go is not installed or not in PATH.
+    echo Please install Go from: https://go.dev/dl/
     pause
     exit /b 1
 )
-
-for /f "tokens=3" %%v in ('go version') do set GO_VERSION=%%v
+for /f "tokens=3" %%v in ('go version') do set "GO_VERSION=%%v"
 echo [OK] Go version: %GO_VERSION%
 
-:: Check if git is installed
-where git >nul 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Git is not installed!
-    echo Please download and install Git from: https://git-scm.com/download/win
-    echo After installing Git, run this script again.
+if exist "%SCRIPT_DIR%go.mod" (
+    set "SOURCE_DIR=%SCRIPT_DIR%"
+    echo [INFO] Using local source tree: !SOURCE_DIR!
+) else (
+    where git >nul 2>&1
+    if errorlevel 1 (
+        echo [ERROR] Git is required when installing without a local source tree.
+        pause
+        exit /b 1
+    )
+
+    echo [INFO] Downloading ACCIL source package...
+    echo [INFO] Repository: %REPO_URL%
+    git clone --depth 1 "%REPO_URL%" "%TEMP_DIR%"
+    if errorlevel 1 (
+        echo [ERROR] Failed to download source package.
+        pause
+        exit /b 1
+    )
+    set "SOURCE_DIR=%TEMP_DIR%"
+    echo [OK] Download completed
+)
+
+pushd "%SOURCE_DIR%" >nul || (
+    echo [ERROR] Cannot access source directory.
+    if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
     pause
     exit /b 1
 )
 
-echo [OK] Git is installed
-echo.
-
-:: Clone repository to temp directory
-set TEMP_DIR=%TEMP%\accil-install-%RANDOM%
-echo [INFO] Downloading ACCIL from GitHub...
-echo [INFO] Repository: %REPO_URL%
-echo.
-
-git clone --depth 1 %REPO_URL% "%TEMP_DIR%"
-if %ERRORLEVEL% neq 0 (
-    echo.
-    echo [ERROR] Failed to download from GitHub
-    echo.
-    echo Possible solutions:
-    echo   1. Check your internet connection
-    echo   2. If using proxy, configure git:
-    echo      git config --global http.proxy http://127.0.0.1:7890
-    echo   3. Or download manually from:
-    echo      https://github.com/acacMAX/accil/archive/refs/heads/main.zip
-    pause
-    exit /b 1
+if not exist "!INSTALL_DIR!" mkdir "!INSTALL_DIR!" 2>nul
+if not exist "!INSTALL_DIR!" (
+    set "INSTALL_DIR=%FALLBACK_INSTALL_DIR%"
+    if not exist "!INSTALL_DIR!" mkdir "!INSTALL_DIR!" 2>nul
 )
-echo [OK] Download completed
-echo.
-
-:: Build
-echo [INFO] Building ACCIL...
-if not exist "%TEMP_DIR%" (
-    echo [ERROR] Download directory not found
+if not exist "!INSTALL_DIR!" (
+    set "INSTALL_DIR=%LAST_RESORT_INSTALL_DIR%"
+    if not exist "!INSTALL_DIR!" mkdir "!INSTALL_DIR!" 2>nul
+)
+if not exist "!INSTALL_DIR!" (
+    echo [ERROR] Failed to create install directory.
+    echo [ERROR] Tried: %USERPROFILE%\.accil\bin
+    echo [ERROR] Tried: %FALLBACK_INSTALL_DIR%
+    echo [ERROR] Tried: %LAST_RESORT_INSTALL_DIR%
+    popd >nul
+    if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
     pause
     exit /b 1
 )
 
-cd /d "%TEMP_DIR%"
-if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Cannot access download directory
-    pause
-    exit /b 1
+if not exist "%CACHE_DIR%" mkdir "%CACHE_DIR%"
+if not exist "%GOCACHE%" mkdir "%GOCACHE%"
+if not exist "%GOMODCACHE%" mkdir "%GOMODCACHE%"
+
+set "ACCIL_VER=1.4.6"
+if exist VERSION (
+    for /f "usebackq delims=" %%a in ("VERSION") do set "ACCIL_VER=%%a"
 )
-
-echo [INFO] Installing dependencies...
-go mod tidy
-if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Failed to install dependencies
-    echo.
-    echo Try setting Go proxy:
-    echo   go env -w GOPROXY=https://goproxy.cn,direct
-    cd /d "%USERPROFILE%"
-    pause
-    exit /b 1
-)
-
-if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
-
-echo [INFO] Compiling...
-set "ACCIL_VER=1.4.0"
-if exist VERSION for /f "usebackq delims=" %%a in ("VERSION") do set "ACCIL_VER=%%a"
 set "ACCIL_VER=%ACCIL_VER: =%"
-go build -buildvcs=false -ldflags="-X github.com/accil/accil/cmd.Version=%ACCIL_VER%" -o "%INSTALL_DIR%\accil.exe" .
-if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Build failed
-    cd /d "%USERPROFILE%"
+
+echo [INFO] Building ACCIL v%ACCIL_VER%...
+go build -buildvcs=false -ldflags="-X github.com/accil/accil/cmd.Version=%ACCIL_VER%" -o "%BUILD_OUTPUT%" .
+if errorlevel 1 (
+    echo [ERROR] Build failed.
+    popd >nul
+    if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
     pause
     exit /b 1
 )
+copy /y "%BUILD_OUTPUT%" "!INSTALL_DIR!\accil.exe" >nul 2>nul
+if errorlevel 1 (
+    if /I not "!INSTALL_DIR!"=="%FALLBACK_INSTALL_DIR%" (
+        set "INSTALL_DIR=%FALLBACK_INSTALL_DIR%"
+        if not exist "!INSTALL_DIR!" mkdir "!INSTALL_DIR!" 2>nul
+        copy /y "%BUILD_OUTPUT%" "!INSTALL_DIR!\accil.exe" >nul 2>nul
+    )
+)
+if errorlevel 1 (
+    if /I not "!INSTALL_DIR!"=="%LAST_RESORT_INSTALL_DIR%" (
+        set "INSTALL_DIR=%LAST_RESORT_INSTALL_DIR%"
+        if not exist "!INSTALL_DIR!" mkdir "!INSTALL_DIR!" 2>nul
+        copy /y "%BUILD_OUTPUT%" "!INSTALL_DIR!\accil.exe" >nul 2>nul
+    )
+)
+if errorlevel 1 (
+    echo [ERROR] Failed to copy accil.exe to an install directory.
+    if exist "%BUILD_OUTPUT%" del /f /q "%BUILD_OUTPUT%" >nul 2>nul
+    popd >nul
+    if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
+    pause
+    exit /b 1
+)
+if exist "%BUILD_OUTPUT%" del /f /q "%BUILD_OUTPUT%" >nul 2>nul
 echo [OK] Build completed
 
-cd /d "%USERPROFILE%"
-
-:: Cleanup
-echo [INFO] Cleaning up...
-if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
-echo [OK] Cleanup completed
-echo.
-
-:: Add to PATH
-echo [INFO] Configuring PATH...
-
-:: Check if already in PATH
-echo %PATH% | findstr /C:"%INSTALL_DIR%" >nul
-if %ERRORLEVEL% equ 0 (
-    echo [OK] Already in PATH
-) else (
-    :: Add to current session immediately
-    set "PATH=%PATH%;%INSTALL_DIR%"
-
-    :: Get current user PATH from registry
-    for /f "skip=2 tokens=2,*" %%a in ('reg query "HKCU\Environment" /v PATH 2^>nul') do set CURRENT_USER_PATH=%%b
-    if "!CURRENT_USER_PATH!"=="" (
-        setx PATH "%INSTALL_DIR%" >nul
+echo %PATH% | findstr /I /C:"!INSTALL_DIR!" >nul
+if errorlevel 1 (
+    set "PATH=%PATH%;!INSTALL_DIR!"
+    for /f "skip=2 tokens=2,*" %%a in ('reg query "HKCU\Environment" /v PATH 2^>nul') do set "CURRENT_USER_PATH=%%b"
+    if defined CURRENT_USER_PATH (
+        setx PATH "!CURRENT_USER_PATH!;!INSTALL_DIR!" >nul
     ) else (
-        setx PATH "!CURRENT_USER_PATH!;%INSTALL_DIR%" >nul
+        setx PATH "!INSTALL_DIR!" >nul
     )
-    if !ERRORLEVEL! equ 0 (
+    if errorlevel 1 (
+        echo [WARNING] Could not add to PATH automatically.
+        echo [WARNING] Add this folder manually: !INSTALL_DIR!
+    ) else (
         echo [OK] Added to user PATH
-        echo     You can now use 'accil' command globally
-    ) else (
-        echo [WARNING] Could not add to PATH automatically
-        echo Please add manually: %INSTALL_DIR%
     )
-)
-echo.
-
-:: Verify installation
-echo [INFO] Verifying installation...
-if exist "%INSTALL_DIR%\accil.exe" (
-    echo [OK] Installation verified
-    echo     Location: %INSTALL_DIR%\accil.exe
 ) else (
-    echo [ERROR] Installation verification failed
+    echo [OK] Install directory already present in PATH
+)
+
+"!INSTALL_DIR!\accil.exe" version >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Installation verification failed.
+    popd >nul
+    if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
     pause
     exit /b 1
 )
-echo.
 
-:: Success
+popd >nul
+if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
+
+echo.
 echo ========================================
 echo    Installation Complete!
 echo ========================================
 echo.
-echo Install location: %INSTALL_DIR%\accil.exe
-echo.
-echo USAGE:
-echo   - You can use 'accil' command NOW in this window
-echo   - For NEW command prompts, simply type: accil
-echo.
-echo If 'accil' is not recognized in new windows:
-echo   1. Open System Properties ^> Environment Variables
-echo   2. Add to PATH: %INSTALL_DIR%
-echo   Or run: setx PATH "%%PATH%%;%INSTALL_DIR%"
+echo Installed to: !INSTALL_DIR!\accil.exe
+if /I "!INSTALL_DIR!"=="%LAST_RESORT_INSTALL_DIR%" (
+    echo [WARNING] Primary install directories were not writable.
+    echo [WARNING] Installed to a temp-backed fallback directory instead.
+)
+echo You can run: accil
+echo If the command is not available in a new terminal yet, reopen the terminal.
 echo.
 
 set /p run_now="Run ACCIL now? (y/n): "
@@ -174,3 +176,4 @@ if /i "%run_now%"=="y" (
 )
 
 pause
+exit /b 0

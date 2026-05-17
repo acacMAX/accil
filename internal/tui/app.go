@@ -865,10 +865,7 @@ func (m Model) renderHelp() string {
   /review        审查模式
   /agent         代理模式
   /remote        远程开发模式
-  /provider <p>  切换服务商
-  /model <name>  切换模型
-  /baseurl <u>   切换 API URL
-  /config        显示当前配置
+  /config        配置查看/修改
   /context       显示上下文
 
   快捷键
@@ -1077,8 +1074,66 @@ func (m Model) handleSlashCommand(content string) (tea.Model, tea.Cmd) {
 		m.updateViewport()
 
 	case "/config":
-		return m, func() tea.Msg {
-			return ConfigShowMessage{}
+		if len(cmd) == 1 {
+			return m, func() tea.Msg {
+				return ConfigShowMessage{}
+			}
+		}
+
+		switch strings.ToLower(cmd[1]) {
+		case "show":
+			m.Input.SetValue("")
+			return m, func() tea.Msg {
+				return ConfigShowMessage{}
+			}
+		case "provider":
+			if len(cmd) > 2 {
+				m.Input.SetValue("")
+				return m, func() tea.Msg {
+					return ConfigUpdateMessage{Kind: "provider", Value: cmd[2]}
+				}
+			}
+			m.Messages = append(m.Messages, DisplayMessage{
+				Role:      "system",
+				Content:   "Usage: /config provider <name>",
+				Timestamp: time.Now(),
+			})
+			m.updateViewport()
+		case "model":
+			if len(cmd) > 2 {
+				newModel := strings.Join(cmd[2:], " ")
+				m.Input.SetValue("")
+				return m, func() tea.Msg {
+					return ConfigUpdateMessage{Kind: "model", Value: newModel}
+				}
+			}
+			m.Messages = append(m.Messages, DisplayMessage{
+				Role:      "system",
+				Content:   "Usage: /config model <name>",
+				Timestamp: time.Now(),
+			})
+			m.updateViewport()
+		case "baseurl":
+			if len(cmd) > 2 {
+				newBaseURL := strings.Join(cmd[2:], " ")
+				m.Input.SetValue("")
+				return m, func() tea.Msg {
+					return ConfigUpdateMessage{Kind: "base_url", Value: newBaseURL}
+				}
+			}
+			m.Messages = append(m.Messages, DisplayMessage{
+				Role:      "system",
+				Content:   "Usage: /config baseurl <url>",
+				Timestamp: time.Now(),
+			})
+			m.updateViewport()
+		default:
+			m.Messages = append(m.Messages, DisplayMessage{
+				Role:      "system",
+				Content:   "Usage: /config [show|provider|model|baseurl]",
+				Timestamp: time.Now(),
+			})
+			m.updateViewport()
 		}
 
 	case "/context":

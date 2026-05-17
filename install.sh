@@ -1,214 +1,142 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# ACCIL 一键安装脚本
-# 支持: Linux, macOS, Windows (Git Bash)
-
-set -e
+set -euo pipefail
 
 REPO_URL="https://github.com/acacMAX/accil.git"
 INSTALL_DIR="$HOME/.accil/bin"
+CACHE_DIR="${TMPDIR:-/tmp}/accil-cache"
 BINARY_NAME="accil"
+DEFAULT_VERSION="1.4.6"
 
-# 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-print_logo() {
-    echo -e "${BLUE}"
-    echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║                                                              ║"
-    echo "║   █████╗ ██████╗ ██████╗  ██████╗██╗  ██╗██╗     ███████╗   ║"
-    echo "║  ██╔══██╗██╔══██╗██╔══██╗██╔════╝██║  ██║██║     ██╔════╝   ║"
-    echo "║  ███████║██████╔╝██████╔╝██║     ███████║██║     █████╗     ║"
-    echo "║  ██╔══██║██╔══██╗██╔══██╗██║     ██╔══██║██║     ██╔══╝     ║"
-    echo "║  ██║  ██║██████╔╝██████╔╝╚██████╗██║  ██║███████╗███████╗   ║"
-    echo "║  ╚═╝  ╚═╝╚═════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝   ║"
-    echo "║                                                              ║"
-    echo "║           AI驱动的自主编程助手 - 安装程序                    ║"
-    echo "║                                                              ║"
-    echo "╚══════════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMP_DIR=""
+SOURCE_DIR=""
+
+info() {
+    printf "${BLUE}[INFO]${NC} %s\n" "$1"
 }
+
+success() {
+    printf "${GREEN}[OK]${NC} %s\n" "$1"
+}
+
+warn() {
+    printf "${YELLOW}[WARN]${NC} %s\n" "$1"
+}
+
+fail() {
+    printf "${RED}[ERROR]${NC} %s\n" "$1"
+    exit 1
+}
+
+cleanup() {
+    if [[ -n "$TEMP_DIR" && -d "$TEMP_DIR" ]]; then
+        rm -rf "$TEMP_DIR"
+    fi
+}
+
+trap cleanup EXIT
 
 check_go() {
-    if ! command -v go &> /dev/null; then
-        echo -e "${RED}错误: 未安装 Go${NC}"
-        echo -e "${YELLOW}请先安装 Go 1.21 或更高版本:${NC}"
-        echo "  - macOS:   brew install go"
-        echo "  - Linux:   sudo apt install golang-go 或 sudo dnf install golang"
-        echo "  - Windows: 从 https://go.dev/dl/ 下载安装"
-        exit 1
-    fi
-
-    GO_VERSION=$(go version | grep -oP 'go\K[0-9.]+' | head -1)
-    echo -e "${GREEN}✓ 检测到 Go $GO_VERSION${NC}"
+    command -v go >/dev/null 2>&1 || fail "Go is not installed or not in PATH."
+    success "Go detected: $(go version)"
 }
 
-install_from_source() {
-    echo -e "${BLUE}正在从源码安装...${NC}"
-    
-    # 创建临时目录
-    TEMP_DIR=$(mktemp -d)
-    cd "$TEMP_DIR"
-    
-    # 克隆仓库
-    echo -e "${YELLOW}→ 克隆仓库...${NC}"
-    git clone "$REPO_URL" 2>/dev/null || {
-        # 如果仓库不存在，使用当前目录
-        echo -e "${YELLOW}→ 使用本地源码...${NC}"
-        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-        cd "$SCRIPT_DIR"
-    }
-    
-    cd accil 2>/dev/null || true
-    
-    # 设置 Go 代理
-    export GOPROXY=https://goproxy.cn,direct
-    
-    # 编译
-    echo -e "${YELLOW}→ 编译中...${NC}"
-    go mod tidy
-    ACCIL_VER="$( (test -f VERSION && tr -d '\r\n' < VERSION) || echo "1.3.5")"
-    go build -buildvcs=false -ldflags="-s -w -X github.com/accil/accil/cmd.Version=${ACCIL_VER}" -o "$BINARY_NAME" .
-    
-    # 创建安装目录
+resolve_source_dir() {
+    if [[ -f "$SCRIPT_DIR/go.mod" ]]; then
+        SOURCE_DIR="$SCRIPT_DIR"
+        info "Using local source tree: $SOURCE_DIR"
+        return
+    fi
+
+    command -v git >/dev/null 2>&1 || fail "Git is required when installing without a local source tree."
+    TEMP_DIR="$(mktemp -d)"
+    info "Downloading ACCIL source package..."
+    git clone --depth 1 "$REPO_URL" "$TEMP_DIR" >/dev/null 2>&1 || fail "Failed to download source package."
+    SOURCE_DIR="$TEMP_DIR"
+    success "Download completed"
+}
+
+read_version() {
+    if [[ -f "$SOURCE_DIR/VERSION" ]]; then
+        tr -d '\r\n' < "$SOURCE_DIR/VERSION"
+    else
+        printf "%s" "$DEFAULT_VERSION"
+    fi
+}
+
+build_and_install() {
+    local version
+    version="$(read_version)"
     mkdir -p "$INSTALL_DIR"
-    
-    # 移动二进制文件
-    mv "$BINARY_NAME" "$INSTALL_DIR/"
-    
-    # 清理
-    cd -
-    rm -rf "$TEMP_DIR"
-    
-    echo -e "${GREEN}✓ 编译完成${NC}"
+    mkdir -p "$CACHE_DIR/go-build" "$CACHE_DIR/gomod"
+    export GOCACHE="$CACHE_DIR/go-build"
+    export GOMODCACHE="$CACHE_DIR/gomod"
+
+    info "Building ACCIL v$version..."
+    (
+        cd "$SOURCE_DIR"
+        go build -buildvcs=false -ldflags="-X github.com/accil/accil/cmd.Version=$version" -o "$INSTALL_DIR/$BINARY_NAME" .
+    ) || fail "Build failed."
+
+    chmod +x "$INSTALL_DIR/$BINARY_NAME"
+    success "Installed to $INSTALL_DIR/$BINARY_NAME"
 }
 
 add_to_path() {
-    echo -e "${BLUE}配置 PATH...${NC}"
-    
-    # 检查是否已在 PATH 中
-    if [[ ":$PATH:" == *":$INSTALL_DIR:"* ]]; then
-        echo -e "${GREEN}✓ PATH 已配置${NC}"
-        return
+    case ":$PATH:" in
+        *":$INSTALL_DIR:"*)
+            success "Install directory already present in PATH"
+            return
+            ;;
+    esac
+
+    local shell_rc=""
+    if [[ -n "${ZSH_VERSION:-}" ]]; then
+        shell_rc="$HOME/.zshrc"
+    elif [[ -n "${BASH_VERSION:-}" ]]; then
+        shell_rc="$HOME/.bashrc"
+    elif [[ -f "$HOME/.profile" ]]; then
+        shell_rc="$HOME/.profile"
     fi
-    
-    # 添加到 shell 配置文件
-    SHELL_RC=""
-    if [ -n "$ZSH_VERSION" ]; then
-        SHELL_RC="$HOME/.zshrc"
-    elif [ -n "$BASH_VERSION" ]; then
-        SHELL_RC="$HOME/.bashrc"
+
+    if [[ -n "$shell_rc" ]]; then
+        if ! grep -Fq "$INSTALL_DIR" "$shell_rc" 2>/dev/null; then
+            {
+                printf "\n# ACCIL\n"
+                printf "export PATH=\"\$PATH:%s\"\n" "$INSTALL_DIR"
+            } >> "$shell_rc"
+        fi
+        success "Updated PATH in $shell_rc"
+    else
+        warn "Could not determine shell rc file automatically."
+        warn "Add this directory to PATH manually: $INSTALL_DIR"
     fi
-    
-    if [ -n "$SHELL_RC" ]; then
-        echo "" >> "$SHELL_RC"
-        echo "# ACCIL" >> "$SHELL_RC"
-        echo "export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$SHELL_RC"
-        echo -e "${GREEN}✓ 已添加到 $SHELL_RC${NC}"
-    fi
-    
-    # 当前会话生效
+
     export PATH="$PATH:$INSTALL_DIR"
 }
 
-run_setup() {
-    echo -e "${BLUE}"
-    echo "╭───────────────────────────────────────╮"
-    echo "│         首次使用配置                   │"
-    echo "╰───────────────────────────────────────╯"
-    echo -e "${NC}"
-    
-    echo "请选择 API 提供商:"
-    echo "  1) OpenAI"
-    echo "  2) DeepSeek"
-    echo "  3) Anthropic"
-    echo "  4) 本地 Ollama"
-    echo "  5) 自定义"
-    echo ""
-    read -p "请选择 [1-5]: " provider_choice
-    
-    case $provider_choice in
-        1)
-            BASE_URL="https://api.openai.com/v1"
-            DEFAULT_MODEL="gpt-4o"
-            ;;
-        2)
-            BASE_URL="https://api.deepseek.com/v1"
-            DEFAULT_MODEL="deepseek-chat"
-            ;;
-        3)
-            BASE_URL="https://api.anthropic.com/v1"
-            DEFAULT_MODEL="claude-3-opus"
-            ;;
-        4)
-            BASE_URL="http://localhost:11434/v1"
-            DEFAULT_MODEL="llama3"
-            ;;
-        5)
-            read -p "输入 API URL: " BASE_URL
-            read -p "输入模型名称: " DEFAULT_MODEL
-            ;;
-        *)
-            BASE_URL="https://api.openai.com/v1"
-            DEFAULT_MODEL="gpt-4o"
-            ;;
-    esac
-    
-    read -p "输入 API Key: " API_KEY
-    
-    # 创建配置目录
-    CONFIG_DIR="$HOME/.accil"
-    mkdir -p "$CONFIG_DIR"
-    
-    # 写入配置文件
-    cat > "$CONFIG_DIR/config.yaml" << EOF
-api_key: "$API_KEY"
-base_url: "$BASE_URL"
-model: "$DEFAULT_MODEL"
-max_tokens: 4096
-auto_approve: false
-EOF
-    
-    echo -e "${GREEN}✓ 配置已保存到 $CONFIG_DIR/config.yaml${NC}"
+verify_install() {
+    "$INSTALL_DIR/$BINARY_NAME" version >/dev/null 2>&1 || fail "Installed binary verification failed."
+    success "Installation verified"
 }
 
-print_success() {
-    echo ""
-    echo -e "${GREEN}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║                    安装成功!                                  ║${NC}"
-    echo -e "${GREEN}╚══════════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo -e "安装位置: ${YELLOW}$INSTALL_DIR/accil${NC}"
-    echo ""
-    echo "使用方法:"
-    echo "  accil              # 启动交互模式"
-    echo "  accil '你好'       # 单次执行"
-    echo "  accil --help       # 查看帮助"
-    echo "  accil --setup      # 重新配置"
-    echo ""
-    echo -e "${YELLOW}注意: 请重新打开终端或运行 'source ~/.bashrc' 使 PATH 生效${NC}"
-    echo ""
+main() {
+    info "ACCIL installer starting"
+    check_go
+    resolve_source_dir
+    build_and_install
+    add_to_path
+    verify_install
+    printf "\n"
+    success "Installation complete"
+    printf "Run: %s\n" "$BINARY_NAME"
 }
 
-# Windows 特定检测
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
-    BINARY_NAME="accil.exe"
-    INSTALL_DIR="$HOME/.accil/bin"
-fi
-
-# 主流程
-print_logo
-check_go
-install_from_source
-add_to_path
-
-# 检查是否需要配置
-if [ ! -f "$HOME/.accil/config.yaml" ]; then
-    run_setup
-fi
-
-print_success
+main "$@"

@@ -4,15 +4,7 @@
 
 ### Step 1: Install ACCIL
 
-**Linux/macOS:**
-```bash
-curl -fsSL https://raw.githubusercontent.com/accil/accil/main/install.sh | bash
-```
-
-**Windows (PowerShell):**
-```powershell
-irm https://raw.githubusercontent.com/accil/accil/main/install.ps1 | iex
-```
+Get the latest installer or package from the [official website](https://cli.acz.qzz.io/).
 
 ### Step 2: Configure API
 
@@ -25,6 +17,15 @@ You'll be prompted to:
 1. Choose an API provider (OpenAI, DeepSeek, Anthropic, Ollama, etc.)
 2. Enter your API key
 3. Select a model
+
+After setup, you can change settings inside the app without rerunning the wizard:
+
+```text
+/config show
+/config provider deepseek
+/config model deepseek-v4-pro
+/config baseurl https://api.deepseek.com/v1
+```
 
 **Or set environment variables:**
 ```bash
@@ -47,6 +48,13 @@ accil "Create a Python hello world script"
 ---
 
 ## 💡 Common Use Cases
+
+### Change Model or Provider Later
+```text
+/config show
+/config provider openai
+/config model gpt-5.5
+```
 
 ### Create Files
 ```bash
@@ -146,7 +154,6 @@ accil
 
 - Read the full [README](README.md) for detailed documentation
 - Explore [examples](examples/) directory for more use cases
-- Join our [community discussions](https://github.com/accil/accil/discussions)
 - Contribute! See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---

@@ -1,5 +1,4 @@
-# ACCIL PowerShell Installation Script
-# This script downloads and installs ACCIL on Windows
+# ACCIL PowerShell installation script
 
 param(
     [string]$Version = "latest",
@@ -11,25 +10,14 @@ if ($Help) {
     Write-Host ""
     Write-Host "Usage:"
     Write-Host "  .\install.ps1 [-Version <version>] [-Help]"
-    Write-Host ""
-    Write-Host "Options:"
-    Write-Host "  -Version    Version to install (default: latest)"
-    Write-Host "  -Help       Show this help message"
     exit 0
 }
 
 $ErrorActionPreference = "Stop"
 
-# Colors
 function Write-Success {
     param([string]$Message)
     Write-Host "[SUCCESS] " -ForegroundColor Green -NoNewline
-    Write-Host $Message
-}
-
-function Write-Error-Custom {
-    param([string]$Message)
-    Write-Host "[ERROR] " -ForegroundColor Red -NoNewline
     Write-Host $Message
 }
 
@@ -39,142 +27,174 @@ function Write-Info {
     Write-Host $Message
 }
 
+function Write-Error-Custom {
+    param([string]$Message)
+    Write-Host "[ERROR] " -ForegroundColor Red -NoNewline
+    Write-Host $Message
+}
+
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$InstallDir = Join-Path $env:USERPROFILE ".accil\bin"
+$FallbackInstallDir = Join-Path $env:LOCALAPPDATA "accil\bin"
+$LastResortInstallDir = Join-Path $env:TEMP "accil\bin"
+$CacheDir = Join-Path $env:TEMP "accil-cache"
+$env:GOCACHE = Join-Path $CacheDir "go-build"
+$env:GOMODCACHE = Join-Path $CacheDir "gomod"
+$RepoUrl = "https://github.com/acacMAX/accil.git"
+$TempDir = Join-Path $env:TEMP ("accil-install-" + [guid]::NewGuid().ToString("N"))
+$BuildOutput = Join-Path $env:TEMP ("accil-build-" + [guid]::NewGuid().ToString("N") + ".exe")
+$SourceDir = $null
+
 Write-Host ""
-Write-Host "╔═══════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║           ACCIL Installation Wizard                  ║" -ForegroundColor Cyan
-Write-Host "╚═══════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "========================================"
+Write-Host "   ACCIL Installation Wizard"
+Write-Host "========================================"
 Write-Host ""
 
-# Check if Go is installed
 Write-Info "Checking Go installation..."
 try {
-    $goVersion = go version 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        Write-Success "Go is installed: $goVersion"
-    } else {
+    $goVersion = & go version 2>&1
+    if ($LASTEXITCODE -ne 0) {
         throw "Go not found"
     }
+    Write-Success "Go is installed: $goVersion"
 } catch {
-    Write-Error-Custom "Go is not installed or not in PATH"
-    Write-Host ""
-    Write-Host "Please install Go from https://golang.org/dl/" -ForegroundColor Yellow
-    Write-Host "After installation, restart your terminal and run this script again." -ForegroundColor Yellow
+    Write-Error-Custom "Go is not installed or not in PATH."
     exit 1
 }
 
-# Determine installation directory
-$InstallDir = "$env:USERPROFILE\.accil\bin"
-if (!(Test-Path $InstallDir)) {
-    New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-    Write-Info "Created installation directory: $InstallDir"
-}
-
-# Clone or download the project
-$TempDir = Join-Path $env:TEMP "accil-install-$((Get-Date).ToString('yyyyMMddHHmmss'))"
-$RepoUrl = "https://github.com/acacMAX/accil.git"
-
-Write-Info "Downloading ACCIL from GitHub..."
-try {
-    git clone $RepoUrl $TempDir 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        throw "Git clone failed"
+if (Test-Path (Join-Path $ScriptDir "go.mod")) {
+    $SourceDir = $ScriptDir
+    Write-Info "Using local source tree: $SourceDir"
+} else {
+    try {
+        $null = Get-Command git -ErrorAction Stop
+    } catch {
+        Write-Error-Custom "Git is required when installing without a local source tree."
+        exit 1
     }
+
+    Write-Info "Downloading ACCIL source package..."
+    & git clone --depth 1 $RepoUrl $TempDir 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error-Custom "Failed to download source package."
+        exit 1
+    }
+    $SourceDir = $TempDir
     Write-Success "Download completed"
-} catch {
-    Write-Error-Custom "Failed to download from GitHub"
-    Write-Host ""
-    Write-Host "Please check your internet connection and try again." -ForegroundColor Yellow
-    exit 1
 }
 
-# Build the project
-Write-Info "Building ACCIL..."
-Set-Location $TempDir
-
-try {
-    # Install dependencies
-    Write-Info "Installing dependencies..."
-    go mod tidy 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to install dependencies"
+if (!(Test-Path $InstallDir)) {
+    try {
+        New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+    } catch {
+        $InstallDir = $FallbackInstallDir
+        try {
+            New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+        } catch {
+            $InstallDir = $LastResortInstallDir
+            New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+        }
     }
+}
+if (!(Test-Path $env:GOCACHE)) {
+    New-Item -ItemType Directory -Force -Path $env:GOCACHE | Out-Null
+}
+if (!(Test-Path $env:GOMODCACHE)) {
+    New-Item -ItemType Directory -Force -Path $env:GOMODCACHE | Out-Null
+}
 
-    # Build
-    Write-Info "Compiling..."
-    $accilVer = "1.4.0"
-    $verFile = Join-Path $TempDir "VERSION"
+Push-Location $SourceDir
+try {
+    $accilVer = "1.4.6"
+    $verFile = Join-Path $SourceDir "VERSION"
     if (Test-Path $verFile) {
         $accilVer = (Get-Content $verFile -TotalCount 1).Trim()
     }
-    if ([string]::IsNullOrWhiteSpace($accilVer)) { $accilVer = "1.4.0" }
-    go build -buildvcs=false -ldflags="-X github.com/accil/accil/cmd.Version=$accilVer" -o "$InstallDir\accil.exe" . 2>&1 | Out-Null
+    if ([string]::IsNullOrWhiteSpace($accilVer)) {
+        $accilVer = "1.4.6"
+    }
+
+    Write-Info "Building ACCIL v$accilVer..."
+    & go build -buildvcs=false "-ldflags=-X github.com/accil/accil/cmd.Version=$accilVer" "-o=$BuildOutput" . 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "Build failed"
     }
-
-    Write-Success "Build completed successfully!"
+    try {
+        Copy-Item -Force $BuildOutput (Join-Path $InstallDir "accil.exe")
+    } catch {
+        $InstallDir = $FallbackInstallDir
+        try {
+            if (!(Test-Path $InstallDir)) {
+                New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+            }
+            Copy-Item -Force $BuildOutput (Join-Path $InstallDir "accil.exe")
+        } catch {
+            $InstallDir = $LastResortInstallDir
+            if (!(Test-Path $InstallDir)) {
+                New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+            }
+            Copy-Item -Force $BuildOutput (Join-Path $InstallDir "accil.exe")
+        }
+    }
+    Write-Success "Build completed"
 } catch {
     Write-Error-Custom $_.Exception.Message
-    Write-Host ""
-    Write-Host "Build failed. Cleaning up..." -ForegroundColor Yellow
-    
-    # Cleanup on failure
-    if (Test-Path $TempDir) {
+    Pop-Location
+    if (Test-Path $BuildOutput) {
+        Remove-Item -Force $BuildOutput -ErrorAction SilentlyContinue
+    }
+    if ((Test-Path $TempDir) -and ($SourceDir -eq $TempDir)) {
         Remove-Item -Recurse -Force $TempDir -ErrorAction SilentlyContinue
     }
     exit 1
 }
-
-# Cleanup temporary files
-Write-Info "Cleaning up temporary files..."
-Set-Location $InstallDir
-if (Test-Path $TempDir) {
-    Remove-Item -Recurse -Force $TempDir -ErrorAction SilentlyContinue
+Pop-Location
+if (Test-Path $BuildOutput) {
+    Remove-Item -Force $BuildOutput -ErrorAction SilentlyContinue
 }
-Write-Success "Cleanup completed"
 
-# Add to PATH if not already present
-Write-Info "Checking PATH..."
-$currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($currentPath -notlike "*$InstallDir*") {
-    Write-Info "Adding $InstallDir to PATH..."
-    $newPath = "$currentPath;$InstallDir"
-    [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
-    Write-Success "Added to PATH"
-
-    # Refresh current session PATH
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+$currentUserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ([string]::IsNullOrWhiteSpace($currentUserPath)) {
+    $currentUserPath = ""
+}
+if ($currentUserPath -notlike "*$InstallDir*") {
+    $newUserPath = if ([string]::IsNullOrWhiteSpace($currentUserPath)) { $InstallDir } else { "$currentUserPath;$InstallDir" }
+    [Environment]::SetEnvironmentVariable("Path", $newUserPath, "User")
+    $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + $newUserPath
+    Write-Success "Added $InstallDir to user PATH"
 } else {
-    Write-Success "PATH already configured"
+    Write-Success "Install directory already present in PATH"
 }
 
-# Verify installation
-Write-Info "Verifying installation..."
 try {
-    & "$InstallDir\accil.exe" version
-    if ($LASTEXITCODE -eq 0) {
-        Write-Success "Installation verified!"
+    & "$InstallDir\accil.exe" version 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Verification failed"
     }
+    Write-Success "Installation verified"
 } catch {
-    Write-Error-Custom "Verification failed"
+    Write-Error-Custom $_.Exception.Message
     exit 1
 }
 
-Write-Host ""
-Write-Host "╔═══════════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║              Installation Complete!                    ║" -ForegroundColor Green
-Write-Host "╚═══════════════════════════════════════════════════════╝" -ForegroundColor Green
-Write-Host ""
-Write-Host "You can now run ACCIL by typing:" -ForegroundColor Cyan
-Write-Host "  accil" -ForegroundColor White
-Write-Host ""
-Write-Host "For first-time setup, run:" -ForegroundColor Cyan
-Write-Host "  accil --setup" -ForegroundColor White
-Write-Host ""
-Write-Host "Would you like to run ACCIL now? (Y/N): " -ForegroundColor Yellow -NoNewline
-$response = Read-Host
+if ((Test-Path $TempDir) -and ($SourceDir -eq $TempDir)) {
+    Remove-Item -Recurse -Force $TempDir -ErrorAction SilentlyContinue
+}
 
-if ($response -eq "Y" -or $response -eq "y") {
-    Write-Host ""
+Write-Host ""
+Write-Host "========================================"
+Write-Host "   Installation Complete!"
+Write-Host "========================================"
+Write-Host ""
+Write-Host "Installed to: $InstallDir\accil.exe"
+if ($InstallDir -eq $LastResortInstallDir) {
+    Write-Host "[WARNING] Primary install directories were not writable." -ForegroundColor Yellow
+    Write-Host "[WARNING] Installed to a temp-backed fallback directory instead." -ForegroundColor Yellow
+}
+Write-Host "You can now run: accil"
+Write-Host ""
+$response = Read-Host "Run ACCIL now? (y/n)"
+if ($response -match '^(?i)y(es)?$') {
     & "$InstallDir\accil.exe"
 }

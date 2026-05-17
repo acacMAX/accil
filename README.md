@@ -14,9 +14,9 @@
 **AI-Powered Autonomous Coding Assistant**
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
-[![Version](https://img.shields.io/badge/release-1.4.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/release-1.4.6-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20|%20macOS%20|%20Linux-lightgrey)](https://github.com/acacMAX/accil)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20|%20macOS%20|%20Linux-lightgrey)](https://cli.acz.qzz.io/)
 [![Website](https://img.shields.io/badge/Website-cli.acz.qzz.io-blue)](https://cli.acz.qzz.io/)
 
 [English](README.md) | [中文](README_zh.md) | [Website](https://cli.acz.qzz.io/)
@@ -54,39 +54,22 @@ Finally, thank you for using this project. If you like it, feel free to give me 
 
 ### Linux / macOS
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/acacMAX/accil/main/install.sh | bash
-```
-
-Or
-
-```bash
-git clone https://github.com/acacMAX/accil.git
-cd accil
-chmod +x install.sh
-./install.sh
-```
+Download the latest package or installer from the [official website](https://cli.acz.qzz.io/).
 
 ### Windows
 
 **Option 1: PowerShell (Recommended)**
 
-```powershell
-# Download and run
-[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/acacMAX/accil/main/install.ps1" -OutFile "$env:TEMP\accil-install.ps1"
-& "$env:TEMP\accil-install.ps1"
-```
+Get the latest installer from the [official website](https://cli.acz.qzz.io/).
 
 **Option 2: Batch File**
 
-Download [`install.bat`](https://raw.githubusercontent.com/acacMAX/accil/main/install.bat) and double-click to run
+Use the Windows package from the [official website](https://cli.acz.qzz.io/).
 
 ### Manual Installation
 
 ```bash
-# Clone repository
-git clone https://github.com/acacMAX/accil.git
+# Extract the source package and enter the project directory
 cd accil
 
 # Install dependencies
@@ -143,6 +126,13 @@ accil "Create a hello world program in Python"
 accil --headless "Refactor this function"
 ```
 
+## What's New in 1.4.6
+
+- Unified runtime configuration under `/config`, with subcommands for provider, model, and base URL.
+- Kept `/provider`, `/model`, and `/baseurl` as compatibility aliases for older workflows.
+- Removed GitHub-facing references from the user docs in favor of the official website and local release flow.
+- Updated release metadata and docs for `v1.4.6`.
+
 ### Built-in Commands
 
 Type these in interactive mode:
@@ -157,7 +147,7 @@ Type these in interactive mode:
 | `/review` | Enter review mode |
 | `/agent` | Enter agent mode |
 | `/remote` | Enter remote development mode |
-| `/model <name>` | Change AI model |
+| `/config` | Show config and available config commands |
 | `/context` | Show current context |
 
 ### Keyboard Shortcuts
@@ -220,6 +210,23 @@ remote:
 export AI_API_KEY="your-api-key"
 export AI_BASE_URL="https://api.openai.com/v1"
 ```
+
+### Change Provider or Model After Setup
+
+You do not need to rerun the setup wizard just to switch models or providers.
+
+The old `/provider`, `/model`, and `/baseurl` commands still work, but `/config ...` is now the primary entry point.
+
+Use these commands in interactive mode:
+
+```text
+/config show
+/config provider deepseek
+/config model deepseek-v4-pro
+/config baseurl https://api.deepseek.com/v1
+```
+
+`/config provider` updates the base URL for known providers, `/config model` switches the active model, `/config baseurl` points to a custom compatible endpoint, and `/config show` prints the current active settings.
 
 ## 🌐 Supported API Providers
 
